@@ -5,6 +5,7 @@ import { findProjectRoot } from './project/projectService';
 import { runCreateProjectWizard } from './project/createProjectWizard';
 import { runOpenProjectCommand } from './project/openProjectCommand';
 import { runGenerateCodeCommand } from './generator/generateCodeCommand';
+import { runCleanGeneratedCommand } from './generator/cleanGeneratedCommand';
 
 export function activate(context: vscode.ExtensionContext) {
   log('Activated.');
@@ -25,7 +26,8 @@ export function activate(context: vscode.ExtensionContext) {
     }),
     vscode.commands.registerCommand('lvcraft.createProject', () => runCreateProjectWizard()),
     vscode.commands.registerCommand('lvcraft.openProject', () => runOpenProjectCommand()),
-    vscode.commands.registerCommand('lvcraft.generateCode', () => runGenerateCodeCommand())
+    vscode.commands.registerCommand('lvcraft.generateCode', () => runGenerateCodeCommand()),
+    vscode.commands.registerCommand('lvcraft.cleanGenerated', () => runCleanGeneratedCommand())
   );
 }
 

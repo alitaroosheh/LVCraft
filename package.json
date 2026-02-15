@@ -11,7 +11,8 @@
     "onCommand:lvcraft.openDesigner",
     "onCommand:lvcraft.createProject",
     "onCommand:lvcraft.openProject",
-    "onCommand:lvcraft.generateCode"
+    "onCommand:lvcraft.generateCode",
+    "onCommand:lvcraft.cleanGenerated"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -19,7 +20,8 @@
       { "command": "lvcraft.openDesigner", "title": "LVCraft: Open Designer" },
       { "command": "lvcraft.createProject", "title": "LVCraft: Create New Project" },
       { "command": "lvcraft.openProject", "title": "LVCraft: Open Existing Project" },
-      { "command": "lvcraft.generateCode", "title": "LVCraft: Generate Code" }
+      { "command": "lvcraft.generateCode", "title": "LVCraft: Generate Code" },
+      { "command": "lvcraft.cleanGenerated", "title": "LVCraft: Clean Generated" }
     ]
   },
   "scripts": {

@@ -394,3 +394,11 @@ Status legend:
 - Stable snake_case IDs from widget `id` or `type_index`
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 6 — User Code Protection + Clean Generated
+- Guard regions in generated `ui.c`: `/* USER CODE BEGIN init */` ... `/* USER CODE END init */`
+- Regeneration preserves content inside guarded blocks
+- Detect malformed markers (missing END/BEGIN) and warn before overwrite
+- `LVCraft: Clean Generated` command: delete contents of `generated/`
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

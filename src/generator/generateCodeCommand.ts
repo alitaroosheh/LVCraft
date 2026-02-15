@@ -3,6 +3,10 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { findProjectRoot, readLayout, readLvProj } from '../project/projectService';
 import { generateUiC, generateUiH } from './codeGen';
+import {
+  extractGuardedBlocks,
+  detectMalformedGuards
+} from './userCodeGuards';
 import { log } from '../infra/log';
 
 const DIR_GENERATED = 'generated';
@@ -31,12 +35,37 @@ export async function runGenerateCodeCommand(): Promise<void> {
   }
 
   const uiDir = path.join(projectRoot, DIR_GENERATED, DIR_UI);
+  const uiCPath = path.join(uiDir, UI_C);
   fs.mkdirSync(uiDir, { recursive: true });
 
-  const uiC = generateUiC(layout, lvproj);
+  let preservedBlocks = new Map<string, string>();
+  if (fs.existsSync(uiCPath)) {
+    const existing = fs.readFileSync(uiCPath, 'utf-8');
+    const malformed = detectMalformedGuards(existing);
+    if (malformed.length > 0) {
+      const proceed = await vscode.window.showWarningMessage(
+        `Guard markers may be corrupted: ${malformed.join('; ')}. Overwrite anyway?`,
+        'Overwrite',
+        'Cancel'
+      );
+      if (proceed !== 'Overwrite') return;
+    } else {
+      preservedBlocks = extractGuardedBlocks(existing);
+    }
+  }
+
+  let uiC = generateUiC(layout, lvproj);
+  const initContent = preservedBlocks.get('init');
+  if (initContent !== undefined && initContent !== '') {
+    uiC = uiC.replace(
+      /(\/\* USER CODE BEGIN init \*\/)\s*(\/\* USER CODE END init \*\/)/,
+      (_, begin, end) => `${begin}\n${initContent}\n  ${end}`
+    );
+  }
+
   const uiH = generateUiH(layout, lvproj);
 
-  fs.writeFileSync(path.join(uiDir, UI_C), uiC, 'utf-8');
+  fs.writeFileSync(uiCPath, uiC, 'utf-8');
   fs.writeFileSync(path.join(uiDir, UI_H), uiH, 'utf-8');
 
   log(`Generated ${DIR_UI}/${UI_C}, ${DIR_UI}/${UI_H}`);

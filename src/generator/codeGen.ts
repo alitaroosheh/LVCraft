@@ -98,6 +98,8 @@ export function generateUiC(layout: Layout, _lvproj: LvProj): string {
   if (!layout.root) {
     lines.push('void ui_init(void) {');
     lines.push('  /* Empty layout */');
+    lines.push('  /* USER CODE BEGIN init */');
+    lines.push('  /* USER CODE END init */');
     lines.push('}');
     return lines.join('\n');
   }
@@ -112,6 +114,8 @@ export function generateUiC(layout: Layout, _lvproj: LvProj): string {
   lines.push('{');
   const body = emitWidget(layout.root, 'root', 'NULL', idMap, '  ');
   lines.push(...body);
+  lines.push('  /* USER CODE BEGIN init */');
+  lines.push('  /* USER CODE END init */');
   lines.push('}');
   return lines.join('\n');
 }
