@@ -21,3 +21,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Widget selection + Property Inspector**: Click widget in tree to select; inspector shows type, id, styleId, children count
 - **Pixel grid overlay**: 10px grid on canvas; Grid toolbar button to toggle
 - **Property Inspector: all properties**: Shows type, id, styleId, x, y, width, height, children, and any other layout.json keys
+- **Asset Browser**: Panel lists images and fonts from assets.json; assets.json in file watcher

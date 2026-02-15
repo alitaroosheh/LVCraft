@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getNonce } from '../webview/getNonce';
 import { log } from '../infra/log';
-import { readLvProj, readLayout } from '../project/projectService';
+import { readLvProj, readLayout, readAssets } from '../project/projectService';
 import type { LayoutWidget } from '../project/types';
 
 function escapeHtml(s: string): string {
@@ -90,6 +90,9 @@ export class DesignerPanel {
     const watcher3 = vscode.workspace.createFileSystemWatcher(
       new vscode.RelativePattern(projectRoot, 'styles.json')
     );
+    const watcher4 = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(projectRoot, 'assets.json')
+    );
     const onProjectFileChange = () => {
       if (DesignerPanel.currentPanel === this) this._refresh();
     };
@@ -99,7 +102,9 @@ export class DesignerPanel {
     watcher2.onDidCreate(onProjectFileChange);
     watcher3.onDidChange(onProjectFileChange);
     watcher3.onDidCreate(onProjectFileChange);
-    this._disposables.push(watcher1, watcher2, watcher3);
+    watcher4.onDidChange(onProjectFileChange);
+    watcher4.onDidCreate(onProjectFileChange);
+    this._disposables.push(watcher1, watcher2, watcher3, watcher4);
   }
 
   private _refresh(): void {
@@ -122,6 +127,7 @@ export class DesignerPanel {
     const nonce = getNonce();
     const lvproj = readLvProj(this._projectRoot.fsPath);
     const layout = readLayout(this._projectRoot.fsPath);
+    const assets = readAssets(this._projectRoot.fsPath);
 
     const width = lvproj?.resolution.width ?? 320;
     const height = lvproj?.resolution.height ?? 240;
@@ -131,6 +137,18 @@ export class DesignerPanel {
     const widgetTreeHtml = layout.root
       ? renderWidgetTree(layout.root)
       : '<span class="wt-empty">Empty</span>';
+
+    const assetImages = (assets.images ?? []).map(
+      (a) => `<div class="asset-item">📷 ${escapeHtml(a.path)}${a.id ? ` <span class="asset-id">[${escapeHtml(a.id)}]</span>` : ''}</div>`
+    ).join('');
+    const assetFonts = (assets.fonts ?? []).map(
+      (a) => `<div class="asset-item">🔤 ${escapeHtml(a.path)}${a.id ? ` <span class="asset-id">[${escapeHtml(a.id)}]</span>` : ''}</div>`
+    ).join('');
+    const assetsHtml =
+      assetImages || assetFonts
+        ? (assetImages ? `<div class="asset-section"><div class="asset-section-title">Images</div>${assetImages}</div>` : '') +
+          (assetFonts ? `<div class="asset-section"><div class="asset-section-title">Fonts</div>${assetFonts}</div>` : '')
+        : '<span class="asset-empty">No assets. Edit assets.json</span>';
 
     const previewData = JSON.stringify({ layout, width, height }).replace(
       /<\//g,
@@ -172,6 +190,11 @@ export class DesignerPanel {
       .wt-node.selected { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
       .wt-style { font-size: 10px; color: var(--vscode-descriptionForeground); margin-left: 4px; }
       .wt-empty { color: var(--vscode-descriptionForeground); font-style: italic; }
+      .asset-section { margin-top: 8px; }
+      .asset-section-title { font-size: 10px; color: var(--vscode-descriptionForeground); margin-bottom: 4px; text-transform: uppercase; }
+      .asset-item { font-size: 11px; padding: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .asset-id { font-size: 10px; color: var(--vscode-descriptionForeground); }
+      .asset-empty { color: var(--vscode-descriptionForeground); font-style: italic; font-size: 11px; }
       .preview-container { position: relative; min-height: 120px; background: #5a5a5a; overflow: hidden; }
       .preview-viewport { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
       .preview-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); color: var(--vscode-descriptionForeground); font-size: 12px; text-align: center; pointer-events: none; }
@@ -197,9 +220,11 @@ export class DesignerPanel {
       </div>
     </header>
     <div class="designer-main">
-      <aside class="panel" style="width: 180px; min-width: 140px;">
+      <aside class="panel" style="width: 200px; min-width: 160px;">
         <div class="panel-title">Widget Tree</div>
         <div class="panel-body"><ul class="wt-tree"><li>${widgetTreeHtml}</li></ul></div>
+        <div class="panel-title" style="border-top: 1px solid var(--vscode-widget-border);">Asset Browser</div>
+        <div class="panel-body" style="flex: 0 1 auto; min-height: 60px;">${assetsHtml}</div>
       </aside>
       <main class="panel" style="flex: 1;">
         <div class="panel-title">Canvas</div>

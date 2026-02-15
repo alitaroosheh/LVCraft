@@ -5,6 +5,7 @@ import {
   LvProj,
   Layout,
   Styles,
+  Assets,
   DEFAULT_LVPROJ,
   DEFAULT_LAYOUT,
   DEFAULT_STYLES,
@@ -69,6 +70,19 @@ export function readLayout(projectRoot: string): Layout {
     log(`Failed to read layout: ${e}`);
   }
   return DEFAULT_LAYOUT;
+}
+
+/** Read assets.json from a project root */
+export function readAssets(projectRoot: string): Assets {
+  const p = path.join(projectRoot, ASSETS_FILENAME);
+  try {
+    const raw = fs.readFileSync(p, 'utf-8');
+    const parsed = JSON.parse(raw) as Assets;
+    if (parsed.version === 1) return parsed;
+  } catch (e) {
+    log(`Failed to read assets: ${e}`);
+  }
+  return DEFAULT_ASSETS;
 }
 
 /** Read styles.json from a project root */

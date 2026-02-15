@@ -467,3 +467,9 @@ Status legend:
 - Display x, y, width, height and any other keys from layout.json
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 17 — Asset Browser
+- Read `assets.json`, display images and fonts in Asset Browser panel
+- Add `assets.json` to file watcher (refresh on change)
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
