@@ -64,6 +64,17 @@ export class DesignerPanel {
     this._extensionUri = extensionUri;
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+    this._panel.webview.onDidReceiveMessage(
+      (msg: { type?: string }) => {
+        if (msg.type === 'generateCode') {
+          void vscode.commands.executeCommand('lvcraft.generateCode');
+        } else if (msg.type === 'refresh') {
+          this._refresh();
+        }
+      },
+      null,
+      this._disposables
+    );
     this._refresh();
 
     const watcher1 = vscode.workspace.createFileSystemWatcher(
@@ -132,6 +143,9 @@ export class DesignerPanel {
       .designer-header { padding: 8px 12px; background: var(--vscode-input-background); border-bottom: 1px solid var(--vscode-widget-border); display: flex; gap: 16px; align-items: center; flex-shrink: 0; }
       .designer-header h2 { margin: 0; font-size: 14px; }
       .designer-header .meta { display: flex; gap: 16px; font-size: 11px; color: var(--vscode-descriptionForeground); }
+      .designer-header .toolbar { display: flex; gap: 8px; margin-left: auto; }
+      .toolbar-btn { padding: 4px 10px; font-size: 12px; cursor: pointer; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; border-radius: 4px; }
+      .toolbar-btn:hover { background: var(--vscode-button-hoverBackground); }
       .designer-main { flex: 1; display: flex; min-height: 0; }
       .panel { border-right: 1px solid var(--vscode-widget-border); display: flex; flex-direction: column; overflow: hidden; }
       .panel:last-of-type { border-right: none; }
@@ -150,6 +164,10 @@ export class DesignerPanel {
     <header class="designer-header">
       <h2>LVCraft Designer</h2>
       <div class="meta">LVGL ${escapeHtml(String(lvglVersion))} · ${width}×${height} · ${colorDepth} bpp</div>
+      <div class="toolbar">
+        <button type="button" class="toolbar-btn" data-action="generateCode">Generate Code</button>
+        <button type="button" class="toolbar-btn" data-action="refresh">Refresh</button>
+      </div>
     </header>
     <div class="designer-main">
       <aside class="panel" style="width: 180px; min-width: 140px;">
@@ -170,7 +188,15 @@ export class DesignerPanel {
       </aside>
     </div>
     <script nonce="${nonce}">
-      // Reserved for WebView bootstrap in later steps.
+      (function() {
+        const vscode = acquireVsCodeApi();
+        document.querySelectorAll('.toolbar-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            if (action) vscode.postMessage({ type: action });
+          });
+        });
+      })();
     </script>
   </body>
 </html>`;

@@ -408,3 +408,9 @@ Status legend:
 - `LVCraft: Open Simulator` command: opens Designer (placeholder for LVGL WASM preview)
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 8 — WebView ↔ Extension messaging + Designer toolbar
+- Toolbar in Designer: "Generate Code" and "Refresh" buttons
+- WebView posts messages; extension handles `generateCode` and `refresh`
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
