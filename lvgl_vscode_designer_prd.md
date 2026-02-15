@@ -449,3 +449,9 @@ Status legend:
 - Toolbar: Zoom 100%, Fit to View buttons
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 14 — Widget selection + Property Inspector
+- Click widget in Widget Tree to select
+- Property Inspector shows selected widget: type, id, styleId, children count
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

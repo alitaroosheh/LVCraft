@@ -8,7 +8,7 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function renderWidgetTree(w: LayoutWidget): string {
+function renderWidgetTree(w: LayoutWidget, path = 'root'): string {
   const label = escapeHtml(w.id ?? w.type ?? '?');
   const type = escapeHtml(w.type);
   const styleTag =
@@ -16,9 +16,9 @@ function renderWidgetTree(w: LayoutWidget): string {
       ? ` <span class="wt-style" title="style">[${escapeHtml(w.styleId)}]</span>`
       : '';
   const children = (w.children ?? [])
-    .map((c) => `<li>${renderWidgetTree(c)}</li>`)
+    .map((c, i) => `<li>${renderWidgetTree(c, path + '.' + i)}</li>`)
     .join('');
-  return `<span class="wt-node" data-type="${type}">${label}${styleTag}</span>${children ? `<ul>${children}</ul>` : ''}`;
+  return `<span class="wt-node" data-path="${escapeHtml(path)}" data-type="${type}" title="Click to select">${label}${styleTag}</span>${children ? `<ul>${children}</ul>` : ''}`;
 }
 
 export class DesignerPanel {
@@ -167,14 +167,20 @@ export class DesignerPanel {
       .panel-body { flex: 1; overflow: auto; padding: 8px; }
       .wt-tree { list-style: none; margin: 0; padding-left: 12px; }
       .wt-tree ul { list-style: none; margin: 0; padding-left: 12px; }
-      .wt-node { display: block; padding: 2px 4px; cursor: default; border-radius: 2px; }
+      .wt-node { display: block; padding: 2px 4px; cursor: pointer; border-radius: 2px; }
       .wt-node:hover { background: var(--vscode-list-hoverBackground); }
+      .wt-node.selected { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
       .wt-style { font-size: 10px; color: var(--vscode-descriptionForeground); margin-left: 4px; }
       .wt-empty { color: var(--vscode-descriptionForeground); font-style: italic; }
       .preview-container { position: relative; min-height: 120px; background: #5a5a5a; overflow: hidden; }
       .preview-viewport { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
       .preview-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); color: var(--vscode-descriptionForeground); font-size: 12px; text-align: center; pointer-events: none; }
       .inspector-placeholder { color: var(--vscode-descriptionForeground); font-style: italic; }
+      .inspector-body { font-size: 11px; }
+      .inspector-row { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--vscode-widget-border); }
+      .inspector-row:last-child { border-bottom: none; }
+      .inspector-label { color: var(--vscode-descriptionForeground); min-width: 60px; }
+      .inspector-value { font-family: var(--vscode-editor-font-family, monospace); }
     </style>
   </head>
   <body>
@@ -206,7 +212,10 @@ export class DesignerPanel {
       </main>
       <aside class="panel" style="width: 200px; min-width: 160px;">
         <div class="panel-title">Property Inspector</div>
-        <div class="panel-body"><span class="inspector-placeholder">Select a widget</span></div>
+        <div id="lvcraft-inspector-body" class="panel-body">
+          <span id="lvcraft-inspector-placeholder" class="inspector-placeholder">Select a widget</span>
+          <div id="lvcraft-inspector-content" class="inspector-body" style="display: none;"></div>
+        </div>
       </aside>
     </div>
     <script nonce="${nonce}">
@@ -293,6 +302,52 @@ export class DesignerPanel {
           }
         }
         zoomFit();
+        function getWidgetByPath(layout, path) {
+          if (!layout || !path || path === 'root') return layout?.root;
+          var parts = path.split('.');
+          var w = layout.root;
+          for (var i = 1; i < parts.length && w; i++) {
+            var idx = parseInt(parts[i], 10);
+            w = (w.children && w.children[idx]) || null;
+          }
+          return w;
+        }
+        function renderInspector(widget) {
+          if (!widget) return '';
+          var children = widget.children || [];
+          var html = '<div class="inspector-row"><span class="inspector-label">type</span><span class="inspector-value">' + escapeHtml(String(widget.type || '—')) + '</span></div>';
+          html += '<div class="inspector-row"><span class="inspector-label">id</span><span class="inspector-value">' + escapeHtml(String(widget.id || '—')) + '</span></div>';
+          html += '<div class="inspector-row"><span class="inspector-label">styleId</span><span class="inspector-value">' + escapeHtml(String(widget.styleId || '—')) + '</span></div>';
+          html += '<div class="inspector-row"><span class="inspector-label">children</span><span class="inspector-value">' + children.length + '</span></div>';
+          return html;
+        }
+        function escapeHtml(s) {
+          return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function selectWidget(path) {
+          document.querySelectorAll('.wt-node.selected').forEach(function(n) { n.classList.remove('selected'); });
+          var node = document.querySelector('.wt-node[data-path="' + path.replace(/"/g, '&quot;') + '"]');
+          if (node) node.classList.add('selected');
+          var layout = window.__LVCRAFT_PREVIEW__ && window.__LVCRAFT_PREVIEW__.layout;
+          var widget = getWidgetByPath(layout, path);
+          var ph = document.getElementById('lvcraft-inspector-placeholder');
+          var ct = document.getElementById('lvcraft-inspector-content');
+          if (widget) {
+            ph.style.display = 'none';
+            ct.style.display = 'block';
+            ct.innerHTML = renderInspector(widget);
+          } else {
+            ph.style.display = 'block';
+            ph.textContent = 'Select a widget';
+            ct.style.display = 'none';
+          }
+        }
+        document.querySelectorAll('.wt-node').forEach(function(node) {
+          node.addEventListener('click', function() {
+            var path = this.getAttribute('data-path');
+            if (path) selectWidget(path);
+          });
+        });
       })();
     </script>
   </body>
