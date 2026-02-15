@@ -171,8 +171,9 @@ export class DesignerPanel {
       .wt-node:hover { background: var(--vscode-list-hoverBackground); }
       .wt-style { font-size: 10px; color: var(--vscode-descriptionForeground); margin-left: 4px; }
       .wt-empty { color: var(--vscode-descriptionForeground); font-style: italic; }
-      .preview-container { position: relative; display: flex; align-items: center; justify-content: center; min-height: 120px; background: #1e1e1e; }
-      .preview-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); color: var(--vscode-descriptionForeground); font-size: 12px; text-align: center; pointer-events: none; }
+      .preview-container { position: relative; min-height: 120px; background: #5a5a5a; overflow: hidden; }
+      .preview-viewport { position: absolute; top: 0; left: 0; transform-origin: 0 0; will-change: transform; }
+      .preview-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); color: var(--vscode-descriptionForeground); font-size: 12px; text-align: center; pointer-events: none; }
       .inspector-placeholder { color: var(--vscode-descriptionForeground); font-style: italic; }
     </style>
   </head>
@@ -181,6 +182,8 @@ export class DesignerPanel {
       <h2>LVCraft Designer</h2>
       <div class="meta">LVGL ${escapeHtml(String(lvglVersion))} · ${width}×${height} · ${colorDepth} bpp</div>
       <div class="toolbar">
+        <button type="button" class="toolbar-btn" data-action="zoom100" title="Zoom 100%">100%</button>
+        <button type="button" class="toolbar-btn" data-action="zoomFit" title="Fit to view">Fit</button>
         <button type="button" class="toolbar-btn" data-action="generateCode">Generate Code</button>
         <button type="button" class="toolbar-btn" data-action="refresh">Refresh</button>
       </div>
@@ -192,8 +195,10 @@ export class DesignerPanel {
       </aside>
       <main class="panel" style="flex: 1;">
         <div class="panel-title">Canvas</div>
-        <div class="panel-body preview-container">
-          <canvas id="lvcraft-preview-canvas" width="${width}" height="${height}" style="max-width: 100%; max-height: 100%; object-fit: contain; background: #1e1e1e;"></canvas>
+        <div id="lvcraft-preview-container" class="panel-body preview-container">
+          <div id="lvcraft-preview-viewport" class="preview-viewport">
+            <canvas id="lvcraft-preview-canvas" width="${width}" height="${height}" style="display: block; background: #1a1a1a;"></canvas>
+          </div>
           <div id="lvcraft-preview-overlay" class="preview-overlay">
             <span>LVGL WASM: not built. See README for build instructions.</span>
           </div>
@@ -208,23 +213,86 @@ export class DesignerPanel {
       (function() {
         window.__LVCRAFT_PREVIEW__ = ${previewData};
         const vscode = acquireVsCodeApi();
+        const W = ${width}, H = ${height};
+        const MIN_ZOOM = 0.25, MAX_ZOOM = 2;
+        var zoom = 1, offsetX = 0, offsetY = 0, panning = false, panStartX = 0, panStartY = 0, panOffsetX = 0, panOffsetY = 0;
+        var container = document.getElementById('lvcraft-preview-container');
+        var viewport = document.getElementById('lvcraft-preview-viewport');
+        function applyTransform() {
+          viewport.style.transform = 'translate(' + offsetX + 'px,' + offsetY + 'px) scale(' + zoom + ')';
+        }
+        function getClientRect() {
+          var r = container.getBoundingClientRect();
+          return { left: r.left, top: r.top, w: r.width, h: r.height };
+        }
+        function zoomToPoint(clientX, clientY, delta) {
+          var r = getClientRect();
+          var mx = clientX - r.left, my = clientY - r.top;
+          var cx = (mx - offsetX) / zoom, cy = (my - offsetY) / zoom;
+          var factor = delta > 0 ? 1.1 : 1 / 1.1;
+          zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * factor));
+          offsetX = mx - cx * zoom;
+          offsetY = my - cy * zoom;
+          applyTransform();
+        }
+        container.addEventListener('wheel', function(e) {
+          e.preventDefault();
+          zoomToPoint(e.clientX, e.clientY, e.deltaY);
+        }, { passive: false });
+        container.addEventListener('mousedown', function(e) {
+          if (e.button === 1) {
+            e.preventDefault();
+            panning = true;
+            panStartX = e.clientX;
+            panStartY = e.clientY;
+            panOffsetX = offsetX;
+            panOffsetY = offsetY;
+          }
+        });
+        document.addEventListener('mousemove', function(e) {
+          if (panning) {
+            offsetX = panOffsetX + (e.clientX - panStartX);
+            offsetY = panOffsetY + (e.clientY - panStartY);
+            applyTransform();
+          }
+        });
+        document.addEventListener('mouseup', function() { panning = false; });
+        function zoom100() {
+          var r = getClientRect();
+          zoom = 1;
+          offsetX = r.w > 0 ? (r.w - W) / 2 : 0;
+          offsetY = r.h > 0 ? (r.h - H) / 2 : 0;
+          applyTransform();
+        }
+        function zoomFit() {
+          var r = getClientRect();
+          if (r.w <= 0 || r.h <= 0) return;
+          var sx = r.w / W, sy = r.h / H;
+          zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.min(sx, sy)));
+          offsetX = (r.w - W * zoom) / 2;
+          offsetY = (r.h - H * zoom) / 2;
+          applyTransform();
+        }
         document.querySelectorAll('.toolbar-btn').forEach(function(btn) {
           btn.addEventListener('click', function() {
-            const action = this.getAttribute('data-action');
-            if (action) vscode.postMessage({ type: action });
+            var action = this.getAttribute('data-action');
+            if (action === 'zoom100') zoom100();
+            else if (action === 'zoomFit') zoomFit();
+            else if (action) vscode.postMessage({ type: action });
           });
         });
         var c = document.getElementById('lvcraft-preview-canvas');
         if (c && c.getContext) {
           var ctx = c.getContext('2d');
           if (ctx) {
-            ctx.fillStyle = '#2d2d2d';
+            ctx.fillStyle = '#1a1a1a';
             ctx.fillRect(0, 0, c.width, c.height);
-            ctx.strokeStyle = '#404040';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#666666';
+            ctx.lineWidth = 2;
             ctx.strokeRect(1, 1, c.width - 2, c.height - 2);
           }
         }
+        zoomFit();
       })();
     </script>
   </body>

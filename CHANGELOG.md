@@ -17,3 +17,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Designer Toolbar**: Generate Code and Refresh buttons
 - **Auto-refresh**: Designer updates when `layout.json`, `lvproj.json`, or `styles.json` changes
 - **Commands**: Open Designer, Open Simulator, Generate Code, Clean Generated
+- **Canvas Zoom/Pan**: Wheel zoom (25%–200%), middle-mouse pan, 100%/Fit toolbar buttons

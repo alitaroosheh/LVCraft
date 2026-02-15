@@ -442,3 +442,10 @@ Status legend:
 - README: LVGL WASM build instructions (lv_web_emscripten)
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 13 — Canvas Zoom / Pan
+- Wheel zoom (centered on cursor) with min 25% / max 200%
+- Middle-mouse drag for pan
+- Toolbar: Zoom 100%, Fit to View buttons
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
