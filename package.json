@@ -4,7 +4,7 @@
   "description": "Visual UI designer for LVGL inside VS Code.",
   "version": "0.0.1",
   "license": "MIT",
-  "publisher": "lvcraft",
+  "publisher": "interthingsio",
   "icon": "LVCraft.png",
   "repository": { "type": "git", "url": "https://github.com/alitaroosheh/LVCraft.git" },
   "engines": { "vscode": "^1.85.0" },
