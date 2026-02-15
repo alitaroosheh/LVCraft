@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Event binding in code generator**: Layout widgets support event properties (`onClick`, `onValueChanged`, `onPressed`, `onReleased`, `onFocus`, `onDefocus`). Use a string for custom handler name or `true` for auto-generated stub. Code generator emits `lv_obj_add_event_cb` and USER CODE-guarded handler stubs.
 - **Position/size in code generator**: Layout widgets with `x`, `y`, `width`, `height` emit `lv_obj_set_pos`, `lv_obj_set_size` (or `lv_obj_set_width`/`lv_obj_set_height`).
 - **Text in code generator**: Label `text` → `lv_label_set_text`; textarea `text` → `lv_textarea_set_text`, `placeholder` → `lv_textarea_set_placeholder_text`; dropdown/roller `options` → `lv_dropdown_set_options` / `lv_roller_set_options`.
+- **Bounding box display**: Selecting a widget in the Widget Tree shows a dashed selection rectangle on the canvas at the widget's position and size from layout.json.
 
 ## [0.0.1] - 2026-02-15
 

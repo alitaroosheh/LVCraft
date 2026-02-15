@@ -252,8 +252,9 @@ export class DesignerPanel {
         <div class="panel-title">Canvas</div>
         <div id="lvcraft-preview-container" class="panel-body preview-container">
           <div id="lvcraft-preview-viewport" class="preview-viewport">
-            <canvas id="lvcraft-preview-canvas" width="${width}" height="${height}" style="display: block; background: #1a1a1a;"></canvas>
+            <canvas id="lvcraft-preview-canvas" width="${width}" height="${height}" style="display: block; background: #e0e0e0;"></canvas>
             <canvas id="lvcraft-grid-canvas" width="${width}" height="${height}" style="position: absolute; top: 0; left: 0; pointer-events: none; display: none;"></canvas>
+            <canvas id="lvcraft-selection-canvas" width="${width}" height="${height}" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
           </div>
           <div id="lvcraft-preview-overlay" class="preview-overlay">
             <span>LVGL WASM: not built. See README for build instructions.</span>
@@ -346,7 +347,7 @@ export class DesignerPanel {
         if (c && c.getContext) {
           var ctx = c.getContext('2d');
           if (ctx) {
-            ctx.fillStyle = '#1a1a1a';
+            ctx.fillStyle = '#e0e0e0';
             ctx.fillRect(0, 0, c.width, c.height);
             ctx.strokeStyle = '#666666';
             ctx.lineWidth = 2;
@@ -410,6 +411,42 @@ export class DesignerPanel {
           }
           return w;
         }
+        function getWidgetBounds(layout, path) {
+          if (!layout || !path) return null;
+          var parts = path.split('.');
+          var w = layout.root;
+          if (!w) return null;
+          var absX = 0, absY = 0;
+          for (var i = 1; i < parts.length && w; i++) {
+            absX += (typeof w.x === 'number' ? w.x : 0);
+            absY += (typeof w.y === 'number' ? w.y : 0);
+            var idx = parseInt(parts[i], 10);
+            w = (w.children && w.children[idx]) || null;
+          }
+          if (!w) return null;
+          absX += (typeof w.x === 'number' ? w.x : 0);
+          absY += (typeof w.y === 'number' ? w.y : 0);
+          var ww = typeof w.width === 'number' ? w.width : (path === 'root' ? W : 50);
+          var hh = typeof w.height === 'number' ? w.height : (path === 'root' ? H : 50);
+          return { x: absX, y: absY, w: ww, h: hh };
+        }
+        var selectionCanvas = document.getElementById('lvcraft-selection-canvas');
+        function drawSelectionBox(bounds) {
+          if (!selectionCanvas || !bounds) return;
+          var ctx = selectionCanvas.getContext('2d');
+          if (!ctx) return;
+          ctx.clearRect(0, 0, selectionCanvas.width, selectionCanvas.height);
+          ctx.strokeStyle = '#0078d4';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
+          ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          ctx.setLineDash([]);
+        }
+        function clearSelectionBox() {
+          if (!selectionCanvas) return;
+          var ctx = selectionCanvas.getContext('2d');
+          if (ctx) ctx.clearRect(0, 0, selectionCanvas.width, selectionCanvas.height);
+        }
         function formatProp(val) {
           if (val === undefined || val === null) return '—';
           if (Array.isArray(val)) return val.length + ' items';
@@ -451,10 +488,13 @@ export class DesignerPanel {
             ph.style.display = 'none';
             ct.style.display = 'block';
             ct.innerHTML = renderInspector(widget);
+            var bounds = getWidgetBounds(layout, path);
+            if (bounds) drawSelectionBox(bounds); else clearSelectionBox();
           } else {
             ph.style.display = 'block';
             ph.textContent = 'Select a widget';
             ct.style.display = 'none';
+            clearSelectionBox();
           }
         }
         document.querySelectorAll('.wt-node').forEach(function(node) {

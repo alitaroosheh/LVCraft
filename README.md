@@ -5,7 +5,7 @@ Visual UI designer for LVGL inside VS Code. Design embedded UIs visually and gen
 ## Features
 
 - **Project Management** — Create, open, and manage LVCraft projects
-- **Designer Panel** — Widget tree, canvas placeholder, property inspector (3-panel layout)
+- **Designer Panel** — Widget tree, canvas (LVGL WASM or placeholder), property inspector; selection bounding box on canvas
 - **Code Generator** — Deterministic C output (`ui.c`, `ui.h`) from `layout.json`; position/size (`x`, `y`, `width`, `height`), label `text`; event binding (`onClick`, etc.) with USER CODE-guarded stubs
 - **User Code Protection** — Guard regions preserved across regeneration
 - **Auto-refresh** — Designer updates when `layout.json`, `lvproj.json`, or `styles.json` changes

@@ -494,3 +494,10 @@ Status legend:
 - Text: label `text` → `lv_label_set_text`; textarea `text`, `placeholder` → `lv_textarea_set_text`, `lv_textarea_set_placeholder_text`; dropdown/roller `options` → `lv_dropdown_set_options`, `lv_roller_set_options`
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 21 — Bounding box display on canvas
+- When a widget is selected in the Widget Tree, show a dashed selection rectangle on the canvas at the widget's position (x, y, width, height from layout.json)
+- Absolute position computed from nested parent offsets
+- Selection overlay canvas; cleared when no widget selected
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
