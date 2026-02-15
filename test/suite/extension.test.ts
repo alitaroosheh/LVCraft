@@ -9,6 +9,8 @@ suite('LVCraft Extension Test Suite', () => {
 
     const commands = await vscode.commands.getCommands(true);
     assert.ok(commands.includes('lvcraft.openDesigner'));
+    assert.ok(commands.includes('lvcraft.createProject'));
+    assert.ok(commands.includes('lvcraft.openProject'));
   });
 });
 

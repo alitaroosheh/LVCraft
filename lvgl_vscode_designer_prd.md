@@ -364,3 +364,11 @@ Status legend:
 - Debug configs (`.vscode/launch.json`, `.vscode/tasks.json`)
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 2 — Project Management Module
+- Project file types (`lvproj.json`, `layout.json`, `styles.json`, `assets.json`)
+- Create Project Wizard (LVGL version, resolution, color depth)
+- Open Existing Project (folder picker, `lvproj.json` validation)
+- Project structure (`generated/`, `user/`, `backups/`)
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

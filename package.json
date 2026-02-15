@@ -5,18 +5,19 @@
   "version": "0.0.1",
   "license": "MIT",
   "publisher": "lvcraft",
-  "engines": {
-    "vscode": "^1.85.0"
-  },
+  "engines": { "vscode": "^1.85.0" },
   "categories": ["Other"],
-  "activationEvents": ["onCommand:lvcraft.openDesigner"],
+  "activationEvents": [
+    "onCommand:lvcraft.openDesigner",
+    "onCommand:lvcraft.createProject",
+    "onCommand:lvcraft.openProject"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "lvcraft.openDesigner",
-        "title": "LVCraft: Open Designer"
-      }
+      { "command": "lvcraft.openDesigner", "title": "LVCraft: Open Designer" },
+      { "command": "lvcraft.createProject", "title": "LVCraft: Create New Project" },
+      { "command": "lvcraft.openProject", "title": "LVCraft: Open Existing Project" }
     ]
   },
   "scripts": {
@@ -44,4 +45,3 @@
     "@vscode/vsce": "^3.7.1"
   }
 }
-
