@@ -190,6 +190,7 @@ export class DesignerPanel {
       <div class="toolbar">
         <button type="button" class="toolbar-btn" data-action="zoom100" title="Zoom 100%">100%</button>
         <button type="button" class="toolbar-btn" data-action="zoomFit" title="Fit to view">Fit</button>
+        <button type="button" class="toolbar-btn" data-action="toggleGrid" title="Toggle pixel grid" id="lvcraft-grid-btn">Grid</button>
         <button type="button" class="toolbar-btn" data-action="generateCode">Generate Code</button>
         <button type="button" class="toolbar-btn" data-action="refresh">Refresh</button>
       </div>
@@ -204,6 +205,7 @@ export class DesignerPanel {
         <div id="lvcraft-preview-container" class="panel-body preview-container">
           <div id="lvcraft-preview-viewport" class="preview-viewport">
             <canvas id="lvcraft-preview-canvas" width="${width}" height="${height}" style="display: block; background: #1a1a1a;"></canvas>
+            <canvas id="lvcraft-grid-canvas" width="${width}" height="${height}" style="position: absolute; top: 0; left: 0; pointer-events: none; display: none;"></canvas>
           </div>
           <div id="lvcraft-preview-overlay" class="preview-overlay">
             <span>LVGL WASM: not built. See README for build instructions.</span>
@@ -287,6 +289,7 @@ export class DesignerPanel {
             var action = this.getAttribute('data-action');
             if (action === 'zoom100') zoom100();
             else if (action === 'zoomFit') zoomFit();
+            else if (action === 'toggleGrid') toggleGrid();
             else if (action) vscode.postMessage({ type: action });
           });
         });
@@ -300,6 +303,32 @@ export class DesignerPanel {
             ctx.lineWidth = 2;
             ctx.strokeRect(1, 1, c.width - 2, c.height - 2);
           }
+        }
+        var gridVisible = false;
+        var gridCanvas = document.getElementById('lvcraft-grid-canvas');
+        function drawGrid() {
+          if (!gridCanvas || !gridCanvas.getContext) return;
+          var gctx = gridCanvas.getContext('2d');
+          if (!gctx) return;
+          gctx.clearRect(0, 0, gridCanvas.width, gridCanvas.height);
+          var step = 10;
+          gctx.strokeStyle = 'rgba(128,128,128,0.4)';
+          gctx.lineWidth = 1;
+          gctx.beginPath();
+          for (var x = step; x < W; x += step) {
+            gctx.moveTo(x, 0);
+            gctx.lineTo(x, H);
+          }
+          for (var y = step; y < H; y += step) {
+            gctx.moveTo(0, y);
+            gctx.lineTo(W, y);
+          }
+          gctx.stroke();
+        }
+        function toggleGrid() {
+          gridVisible = !gridVisible;
+          gridCanvas.style.display = gridVisible ? 'block' : 'none';
+          if (gridVisible) drawGrid();
         }
         zoomFit();
         function getWidgetByPath(layout, path) {

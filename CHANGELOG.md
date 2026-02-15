@@ -19,3 +19,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Commands**: Open Designer, Open Simulator, Generate Code, Clean Generated
 - **Canvas Zoom/Pan**: Wheel zoom (25%–200%), middle-mouse pan, 100%/Fit toolbar buttons
 - **Widget selection + Property Inspector**: Click widget in tree to select; inspector shows type, id, styleId, children count
+- **Pixel grid overlay**: 10px grid on canvas; Grid toolbar button to toggle

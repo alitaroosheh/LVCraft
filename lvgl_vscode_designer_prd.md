@@ -455,3 +455,9 @@ Status legend:
 - Property Inspector shows selected widget: type, id, styleId, children count
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 15 — Pixel grid overlay
+- Grid overlay on canvas (10px spacing)
+- Grid visibility toggle in toolbar
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
