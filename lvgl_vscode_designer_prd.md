@@ -379,3 +379,10 @@ Status legend:
 - Canvas placeholder with project resolution
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 4 — Designer 3-panel layout
+- Widget Tree (left): reads `layout.json`, displays widget hierarchy
+- Canvas (center): placeholder for LVGL WASM preview
+- Property Inspector (right): placeholder for selected widget properties
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

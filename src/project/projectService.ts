@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import {
   LvProj,
+  Layout,
   DEFAULT_LVPROJ,
   DEFAULT_LAYOUT,
   DEFAULT_STYLES,
@@ -54,6 +55,19 @@ export function readLvProj(projectRoot: string): LvProj | undefined {
     log(`Failed to read lvproj: ${e}`);
   }
   return undefined;
+}
+
+/** Read layout.json from a project root */
+export function readLayout(projectRoot: string): Layout {
+  const p = path.join(projectRoot, LAYOUT_FILENAME);
+  try {
+    const raw = fs.readFileSync(p, 'utf-8');
+    const parsed = JSON.parse(raw) as Layout;
+    if (parsed.version === 1) return parsed;
+  } catch (e) {
+    log(`Failed to read layout: ${e}`);
+  }
+  return DEFAULT_LAYOUT;
 }
 
 /** Create a new LVCraft project at the given folder */

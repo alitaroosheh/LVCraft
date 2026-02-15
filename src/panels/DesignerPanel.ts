@@ -1,10 +1,20 @@
 import * as vscode from 'vscode';
 import { getNonce } from '../webview/getNonce';
 import { log } from '../infra/log';
-import { readLvProj } from '../project/projectService';
+import { readLvProj, readLayout } from '../project/projectService';
+import type { LayoutWidget } from '../project/types';
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function renderWidgetTree(w: LayoutWidget): string {
+  const label = escapeHtml(w.id ?? w.type ?? '?');
+  const type = escapeHtml(w.type);
+  const children = (w.children ?? [])
+    .map((c) => `<li>${renderWidgetTree(c)}</li>`)
+    .join('');
+  return `<span class="wt-node" data-type="${type}">${label}</span>${children ? `<ul>${children}</ul>` : ''}`;
 }
 
 export class DesignerPanel {
@@ -61,11 +71,16 @@ export class DesignerPanel {
   private _getHtmlForWebview(webview: vscode.Webview, _extensionUri: vscode.Uri): string {
     const nonce = getNonce();
     const lvproj = readLvProj(this._projectRoot.fsPath);
+    const layout = readLayout(this._projectRoot.fsPath);
 
     const width = lvproj?.resolution.width ?? 320;
     const height = lvproj?.resolution.height ?? 240;
     const lvglVersion = lvproj?.lvglVersion ?? '—';
     const colorDepth = lvproj?.colorDepth ?? 16;
+
+    const widgetTreeHtml = layout.root
+      ? renderWidgetTree(layout.root)
+      : '<span class="wt-empty">Empty</span>';
 
     const csp = [
       `default-src 'none';`,
@@ -82,22 +97,47 @@ export class DesignerPanel {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LVCraft</title>
     <style>
-      body { font-family: var(--vscode-font-family, system-ui); margin: 12px; color: var(--vscode-foreground); background: var(--vscode-editor-background); }
-      .meta { margin-bottom: 16px; padding: 12px; background: var(--vscode-input-background); border-radius: 4px; }
-      .meta dt { font-weight: 600; margin-top: 8px; }
-      .meta dd { margin: 4px 0 0 0; }
-      .canvas-placeholder { border: 2px dashed var(--vscode-widget-border); background: var(--vscode-input-background); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--vscode-descriptionForeground); }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: var(--vscode-font-family, system-ui); font-size: 12px; color: var(--vscode-foreground); background: var(--vscode-editor-background); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+      .designer-header { padding: 8px 12px; background: var(--vscode-input-background); border-bottom: 1px solid var(--vscode-widget-border); display: flex; gap: 16px; align-items: center; flex-shrink: 0; }
+      .designer-header h2 { margin: 0; font-size: 14px; }
+      .designer-header .meta { display: flex; gap: 16px; font-size: 11px; color: var(--vscode-descriptionForeground); }
+      .designer-main { flex: 1; display: flex; min-height: 0; }
+      .panel { border-right: 1px solid var(--vscode-widget-border); display: flex; flex-direction: column; overflow: hidden; }
+      .panel:last-of-type { border-right: none; }
+      .panel-title { padding: 6px 10px; font-weight: 600; background: var(--vscode-sideBar-background); border-bottom: 1px solid var(--vscode-widget-border); flex-shrink: 0; }
+      .panel-body { flex: 1; overflow: auto; padding: 8px; }
+      .wt-tree { list-style: none; margin: 0; padding-left: 12px; }
+      .wt-tree ul { list-style: none; margin: 0; padding-left: 12px; }
+      .wt-node { display: block; padding: 2px 4px; cursor: default; border-radius: 2px; }
+      .wt-node:hover { background: var(--vscode-list-hoverBackground); }
+      .wt-empty { color: var(--vscode-descriptionForeground); font-style: italic; }
+      .canvas-placeholder { border: 2px dashed var(--vscode-widget-border); background: var(--vscode-input-background); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--vscode-descriptionForeground); text-align: center; width: 100%; height: 100%; min-height: 120px; }
+      .inspector-placeholder { color: var(--vscode-descriptionForeground); font-style: italic; }
     </style>
   </head>
   <body>
-    <h2>LVCraft Designer</h2>
-    <dl class="meta">
-      <dt>LVGL</dt><dd>${escapeHtml(String(lvglVersion))}</dd>
-      <dt>Resolution</dt><dd>${width} × ${height} px</dd>
-      <dt>Color depth</dt><dd>${colorDepth} bpp</dd>
-    </dl>
-    <div class="canvas-placeholder" style="width: ${Math.min(width, 400)}px; height: ${Math.min(height, 300)}px;">
-      Canvas ${width}×${height} — LVGL WASM preview in next step
+    <header class="designer-header">
+      <h2>LVCraft Designer</h2>
+      <div class="meta">LVGL ${escapeHtml(String(lvglVersion))} · ${width}×${height} · ${colorDepth} bpp</div>
+    </header>
+    <div class="designer-main">
+      <aside class="panel" style="width: 180px; min-width: 140px;">
+        <div class="panel-title">Widget Tree</div>
+        <div class="panel-body"><ul class="wt-tree"><li>${widgetTreeHtml}</li></ul></div>
+      </aside>
+      <main class="panel" style="flex: 1;">
+        <div class="panel-title">Canvas</div>
+        <div class="panel-body">
+          <div class="canvas-placeholder" style="min-width: ${Math.min(width, 300)}px; min-height: ${Math.min(height, 200)}px;">
+            ${width}×${height} — LVGL WASM preview in next step
+          </div>
+        </div>
+      </main>
+      <aside class="panel" style="width: 200px; min-width: 160px;">
+        <div class="panel-title">Property Inspector</div>
+        <div class="panel-body"><span class="inspector-placeholder">Select a widget</span></div>
+      </aside>
     </div>
     <script nonce="${nonce}">
       // Reserved for WebView bootstrap in later steps.
