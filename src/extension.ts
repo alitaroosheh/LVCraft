@@ -4,6 +4,7 @@ import { getLogChannel, log } from './infra/log';
 import { findProjectRoot } from './project/projectService';
 import { runCreateProjectWizard } from './project/createProjectWizard';
 import { runOpenProjectCommand } from './project/openProjectCommand';
+import { runGenerateCodeCommand } from './generator/generateCodeCommand';
 
 export function activate(context: vscode.ExtensionContext) {
   log('Activated.');
@@ -23,7 +24,8 @@ export function activate(context: vscode.ExtensionContext) {
       DesignerPanel.createOrShow(context.extensionUri, vscode.Uri.file(projectRoot));
     }),
     vscode.commands.registerCommand('lvcraft.createProject', () => runCreateProjectWizard()),
-    vscode.commands.registerCommand('lvcraft.openProject', () => runOpenProjectCommand())
+    vscode.commands.registerCommand('lvcraft.openProject', () => runOpenProjectCommand()),
+    vscode.commands.registerCommand('lvcraft.generateCode', () => runGenerateCodeCommand())
   );
 }
 

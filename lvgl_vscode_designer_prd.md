@@ -386,3 +386,11 @@ Status legend:
 - Property Inspector (right): placeholder for selected widget properties
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 5 — Code Generator
+- `LVCraft: Generate Code` command (requires LVCraft project open)
+- Deterministic output: `generated/ui/ui.c`, `generated/ui/ui.h`
+- Maps `layout.json` widgets to LVGL create calls (lv_obj_create, lv_btn_create, etc.)
+- Stable snake_case IDs from widget `id` or `type_index`
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

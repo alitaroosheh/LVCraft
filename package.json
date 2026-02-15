@@ -10,14 +10,16 @@
   "activationEvents": [
     "onCommand:lvcraft.openDesigner",
     "onCommand:lvcraft.createProject",
-    "onCommand:lvcraft.openProject"
+    "onCommand:lvcraft.openProject",
+    "onCommand:lvcraft.generateCode"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       { "command": "lvcraft.openDesigner", "title": "LVCraft: Open Designer" },
       { "command": "lvcraft.createProject", "title": "LVCraft: Create New Project" },
-      { "command": "lvcraft.openProject", "title": "LVCraft: Open Existing Project" }
+      { "command": "lvcraft.openProject", "title": "LVCraft: Open Existing Project" },
+      { "command": "lvcraft.generateCode", "title": "LVCraft: Generate Code" }
     ]
   },
   "scripts": {

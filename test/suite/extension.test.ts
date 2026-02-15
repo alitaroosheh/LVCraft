@@ -11,6 +11,7 @@ suite('LVCraft Extension Test Suite', () => {
     assert.ok(commands.includes('lvcraft.openDesigner'));
     assert.ok(commands.includes('lvcraft.createProject'));
     assert.ok(commands.includes('lvcraft.openProject'));
+    assert.ok(commands.includes('lvcraft.generateCode'));
   });
 });
 
