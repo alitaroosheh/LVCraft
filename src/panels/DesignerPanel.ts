@@ -1,3 +1,5 @@
+import * as path from 'path';
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { getNonce } from '../webview/getNonce';
 import { log } from '../infra/log';
@@ -50,6 +52,10 @@ export class DesignerPanel {
         retainContextWhenHidden: true
       }
     );
+    const iconPath = vscode.Uri.joinPath(extensionUri, 'LVCraft.png');
+    if (fs.existsSync(iconPath.fsPath)) {
+      panel.iconPath = iconPath;
+    }
 
     const instance = new DesignerPanel(panel, extensionUri, projectRoot);
     DesignerPanel.currentPanel = instance;
@@ -154,11 +160,29 @@ export class DesignerPanel {
       /<\//g,
       '<\\/'
     );
+
+    const wasmDir = path.join(this._projectRoot.fsPath, '.lvcraft', 'wasm');
+    let lvglScriptUri = '';
+    const lvglJs = path.join(wasmDir, 'lvgl.js');
+    const indexJs = path.join(wasmDir, 'index.js');
+    if (fs.existsSync(lvglJs)) {
+      lvglScriptUri = webview.asWebviewUri(vscode.Uri.file(lvglJs)).toString();
+    } else if (fs.existsSync(indexJs)) {
+      lvglScriptUri = webview.asWebviewUri(vscode.Uri.file(indexJs)).toString();
+    }
+    if (!lvglScriptUri) {
+      const extMediaWasm = path.join(this._extensionUri.fsPath, 'media', 'wasm', 'lvgl.js');
+      if (fs.existsSync(extMediaWasm)) {
+        lvglScriptUri = webview.asWebviewUri(vscode.Uri.file(extMediaWasm)).toString();
+      }
+    }
+    const lvglScriptUriForJs = lvglScriptUri.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
     const csp = [
       `default-src 'none';`,
       `img-src ${webview.cspSource} https: data:;`,
       `style-src ${webview.cspSource} 'unsafe-inline';`,
-      `script-src 'nonce-${nonce}' ${webview.cspSource};`,
+      `script-src 'nonce-${nonce}' ${webview.cspSource} 'wasm-unsafe-eval';`,
       `worker-src 'none';`
     ].join(' ');
 
@@ -251,6 +275,7 @@ export class DesignerPanel {
         window.__LVCRAFT_PREVIEW__ = ${previewData};
         const vscode = acquireVsCodeApi();
         const W = ${width}, H = ${height};
+        const LVGL_SCRIPT_URI = ${lvglScriptUri ? `'${lvglScriptUriForJs}'` : 'null'};
         const MIN_ZOOM = 0.25, MAX_ZOOM = 2;
         var zoom = 1, offsetX = 0, offsetY = 0, panning = false, panStartX = 0, panStartY = 0, panOffsetX = 0, panOffsetY = 0;
         var container = document.getElementById('lvcraft-preview-container');
@@ -357,6 +382,26 @@ export class DesignerPanel {
           if (gridVisible) drawGrid();
         }
         zoomFit();
+        if (LVGL_SCRIPT_URI) {
+          var overlayEl = document.getElementById('lvcraft-preview-overlay');
+          var canvasEl = document.getElementById('lvcraft-preview-canvas');
+          window.Module = {
+            canvas: canvasEl,
+            arguments: ['', String(W), String(H)]
+          };
+          var script = document.createElement('script');
+          script.src = LVGL_SCRIPT_URI;
+          script.onload = function() {
+            if (overlayEl) overlayEl.style.display = 'none';
+          };
+          script.onerror = function() {
+            if (overlayEl) {
+              overlayEl.style.display = 'flex';
+              overlayEl.querySelector('span').textContent = 'LVGL WASM: failed to load. Check .lvcraft/wasm/ and console.';
+            }
+          };
+          document.body.appendChild(script);
+        }
         function getWidgetByPath(layout, path) {
           if (!layout || !path || path === 'root') return layout?.root;
           var parts = path.split('.');

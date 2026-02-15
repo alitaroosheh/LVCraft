@@ -43,23 +43,21 @@ project-root/
 3. Run **LVCraft: Open Designer** to view the widget tree.
 4. Run **LVCraft: Generate Code** to produce C files in `generated/ui/`.
 
-## LVGL WASM Preview (planned)
+## LVGL WASM Preview
 
-The Designer Canvas shows a placeholder. Full LVGL preview requires building LVGL with Emscripten:
-
-1. Install [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html)
-2. Clone [lv_web_emscripten](https://github.com/lvgl/lv_web_emscripten): `git clone --recursive https://github.com/lvgl/lv_web_emscripten.git`
-3. Build: `cd lv_web_emscripten && mkdir cmbuild && cd cmbuild && emcmake cmake .. && emmake make`
-4. Integrate the generated `lvgl.js` and `lvgl.wasm` into the extension (see PRD 4.5)
+- **End users** — If you install a release that was built with `npm run build:wasm`, the Designer uses the bundled `media/wasm/lvgl.js` and LVGL preview works without any setup.
+- **Override** — Put `lvgl.js` (or `index.js`) in your project at `.lvcraft/wasm/` to use your own build.
+- **Developers** — Clone the repo, run `npm install` (inits the lv_web_emscripten submodule), then `npm run build:wasm` (requires [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) on PATH). See **[wasm/README.md](wasm/README.md)** for details (Windows, Linux, packaging).
 
 Online demos: [lvgl.io/demos](https://lvgl.io/demos)
 
 ## Development
 
 ```bash
-npm install
+npm install          # inits git submodule (deps/lv_web_emscripten)
 npm run build
 npm test
+npm run build:wasm   # optional: build LVGL WASM (requires Emscripten)
 ```
 
 - Press **F5** to launch the Extension Development Host.

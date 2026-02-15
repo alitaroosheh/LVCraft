@@ -1,0 +1,50 @@
+#!/usr/bin/env node
+/**
+ * Build LVGL WASM from deps/lv_web_emscripten and copy to media/wasm/lvgl.js.
+ * Requires Emscripten (emcc, emcmake, emmake) on PATH.
+ * Cross-platform: Windows, Linux, macOS.
+ */
+const path = require('path');
+const fs = require('fs');
+const { execSync } = require('child_process');
+
+const root = path.join(__dirname, '..');
+const depDir = path.join(root, 'deps', 'lv_web_emscripten');
+const buildDir = path.join(depDir, 'cmbuild');
+const outDir = path.join(root, 'media', 'wasm');
+const outFile = path.join(outDir, 'lvgl.js');
+
+function run(cmd, opts = {}) {
+  const shell = process.platform === 'win32';
+  execSync(cmd, { cwd: opts.cwd || root, stdio: 'inherit', shell });
+}
+
+// Check submodule exists
+if (!fs.existsSync(path.join(depDir, 'CMakeLists.txt'))) {
+  console.error('deps/lv_web_emscripten not found. Run: npm install (postinstall inits submodules)');
+  process.exit(1);
+}
+
+// Check Emscripten
+try {
+  execSync('emcc -v', { stdio: 'pipe', shell: process.platform === 'win32' });
+} catch {
+  console.error('emcc not found. Install Emscripten and ensure emcc is on PATH.');
+  console.error('See https://emscripten.org/docs/getting_started/downloads.html');
+  process.exit(1);
+}
+
+console.log('Building LVGL WASM (deps/lv_web_emscripten)...');
+fs.mkdirSync(buildDir, { recursive: true });
+run('emcmake cmake ..', { cwd: buildDir });
+run('emmake make -j4', { cwd: buildDir });
+
+const src = path.join(buildDir, 'index.js');
+if (!fs.existsSync(src)) {
+  console.error('Build did not produce index.js');
+  process.exit(1);
+}
+
+fs.mkdirSync(outDir, { recursive: true });
+fs.copyFileSync(src, outFile);
+console.log('Done: media/wasm/lvgl.js');

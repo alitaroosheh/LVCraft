@@ -473,3 +473,11 @@ Status legend:
 - Add `assets.json` to file watcher (refresh on change)
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 18 — LVGL WASM loader
+- Look for LVGL WASM in project `.lvcraft/wasm/` (lvgl.js or index.js + optional lvgl.wasm)
+- When present, load script with canvas and resolution; hide overlay on success
+- CSP: allow script from webview URI, wasm-unsafe-eval for WebAssembly
+- wasm/ README: build lv_web_emscripten and copy output to `.lvcraft/wasm/`
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

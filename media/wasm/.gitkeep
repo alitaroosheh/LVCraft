@@ -1,0 +1,2 @@
+# LVGL WASM is placed here by: npm run build:wasm
+# Requires Emscripten. See wasm/README.md and scripts/build-wasm.js

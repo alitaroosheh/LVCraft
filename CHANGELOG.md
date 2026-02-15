@@ -22,3 +22,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Pixel grid overlay**: 10px grid on canvas; Grid toolbar button to toggle
 - **Property Inspector: all properties**: Shows type, id, styleId, x, y, width, height, children, and any other layout.json keys
 - **Asset Browser**: Panel lists images and fonts from assets.json; assets.json in file watcher
+- **LVGL WASM loader**: Load LVGL from project `.lvcraft/wasm/` (lvgl.js or index.js); hide overlay on success; wasm/README build instructions
+- **LVGL WASM from extension install**: lv_web_emscripten as git submodule (`deps/lv_web_emscripten`); postinstall inits submodules; `npm run build:wasm` builds to `media/wasm/lvgl.js` (Windows/Linux); Designer loads from extension media when project has no WASM

@@ -5,6 +5,8 @@
   "version": "0.0.1",
   "license": "MIT",
   "publisher": "lvcraft",
+  "icon": "LVCraft.png",
+  "repository": { "type": "git", "url": "https://github.com/alitaroosheh/LVCraft.git" },
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Other"],
   "activationEvents": [
@@ -35,7 +37,9 @@
     "format": "prettier -w .",
     "package": "vsce package",
     "pretest": "npm run build && npm run lint",
-    "test": "node ./dist/test/runTest.js"
+    "test": "node ./dist/test/runTest.js",
+    "postinstall": "git submodule update --init --recursive",
+    "build:wasm": "node scripts/build-wasm.js"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
