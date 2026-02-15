@@ -1,0 +1,15 @@
+.vscode/**
+.vscode-test/**
+.cursor/**
+src/**
+test/**
+dist/test/**
+node_modules/**
+tsconfig.json
+tsconfig.test.json
+eslint.config.mjs
+prettier.config.cjs
+.prettierignore
+.editorconfig
+*.map
+.gitignore

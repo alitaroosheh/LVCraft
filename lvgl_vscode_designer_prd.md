@@ -414,3 +414,9 @@ Status legend:
 - WebView posts messages; extension handles `generateCode` and `refresh`
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 9 — README and packaging
+- README: features, commands, project structure, getting started, dev instructions
+- `.vscodeignore` for vsce package (exclude dev/test source)
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
