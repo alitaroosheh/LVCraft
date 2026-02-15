@@ -12,7 +12,8 @@
     "onCommand:lvcraft.createProject",
     "onCommand:lvcraft.openProject",
     "onCommand:lvcraft.generateCode",
-    "onCommand:lvcraft.cleanGenerated"
+    "onCommand:lvcraft.cleanGenerated",
+    "onCommand:lvcraft.openSimulator"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -21,7 +22,8 @@
       { "command": "lvcraft.createProject", "title": "LVCraft: Create New Project" },
       { "command": "lvcraft.openProject", "title": "LVCraft: Open Existing Project" },
       { "command": "lvcraft.generateCode", "title": "LVCraft: Generate Code" },
-      { "command": "lvcraft.cleanGenerated", "title": "LVCraft: Clean Generated" }
+      { "command": "lvcraft.cleanGenerated", "title": "LVCraft: Clean Generated" },
+      { "command": "lvcraft.openSimulator", "title": "LVCraft: Open Simulator" }
     ]
   },
   "scripts": {

@@ -402,3 +402,9 @@ Status legend:
 - `LVCraft: Clean Generated` command: delete contents of `generated/`
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 7 — Designer refresh + Open Simulator
+- Designer panel refreshes when `layout.json` or `lvproj.json` changes (file watcher)
+- `LVCraft: Open Simulator` command: opens Designer (placeholder for LVGL WASM preview)
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

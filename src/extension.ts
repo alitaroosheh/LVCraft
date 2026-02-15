@@ -27,7 +27,19 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('lvcraft.createProject', () => runCreateProjectWizard()),
     vscode.commands.registerCommand('lvcraft.openProject', () => runOpenProjectCommand()),
     vscode.commands.registerCommand('lvcraft.generateCode', () => runGenerateCodeCommand()),
-    vscode.commands.registerCommand('lvcraft.cleanGenerated', () => runCleanGeneratedCommand())
+    vscode.commands.registerCommand('lvcraft.cleanGenerated', () => runCleanGeneratedCommand()),
+    vscode.commands.registerCommand('lvcraft.openSimulator', () => {
+      log('Command: lvcraft.openSimulator');
+      const wsFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      const projectRoot = wsFolder ? findProjectRoot(wsFolder) : undefined;
+      if (!projectRoot) {
+        vscode.window.showWarningMessage(
+          'Open an LVCraft project first (folder with lvproj.json).'
+        );
+        return;
+      }
+      DesignerPanel.createOrShow(context.extensionUri, vscode.Uri.file(projectRoot));
+    })
   );
 }
 

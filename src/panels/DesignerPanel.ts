@@ -24,13 +24,16 @@ export class DesignerPanel {
   private readonly _projectRoot: vscode.Uri;
   private readonly _disposables: vscode.Disposable[] = [];
 
-  public static createOrShow(extensionUri: vscode.Uri, projectRoot: vscode.Uri) {
+  public static createOrShow(
+    extensionUri: vscode.Uri,
+    projectRoot: vscode.Uri
+  ): DesignerPanel | undefined {
     const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
 
     if (DesignerPanel.currentPanel) {
       log('DesignerPanel: reveal existing panel');
       DesignerPanel.currentPanel._panel.reveal(column);
-      return;
+      return DesignerPanel.currentPanel;
     }
 
     log('DesignerPanel: create new panel');
@@ -44,8 +47,12 @@ export class DesignerPanel {
       }
     );
 
-    DesignerPanel.currentPanel = new DesignerPanel(panel, extensionUri, projectRoot);
+    const instance = new DesignerPanel(panel, extensionUri, projectRoot);
+    DesignerPanel.currentPanel = instance;
+    return instance;
   }
+
+  private _extensionUri: vscode.Uri;
 
   private constructor(
     panel: vscode.WebviewPanel,
@@ -54,9 +61,32 @@ export class DesignerPanel {
   ) {
     this._panel = panel;
     this._projectRoot = projectRoot;
+    this._extensionUri = extensionUri;
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
-    this._panel.webview.html = this._getHtmlForWebview(this._panel.webview, extensionUri);
+    this._refresh();
+
+    const watcher1 = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(projectRoot, 'layout.json')
+    );
+    const watcher2 = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(projectRoot, 'lvproj.json')
+    );
+    const onProjectFileChange = () => {
+      if (DesignerPanel.currentPanel === this) this._refresh();
+    };
+    watcher1.onDidChange(onProjectFileChange);
+    watcher1.onDidCreate(onProjectFileChange);
+    watcher2.onDidChange(onProjectFileChange);
+    watcher2.onDidCreate(onProjectFileChange);
+    this._disposables.push(watcher1, watcher2);
+  }
+
+  private _refresh(): void {
+    this._panel.webview.html = this._getHtmlForWebview(
+      this._panel.webview,
+      this._extensionUri
+    );
   }
 
   public dispose() {
