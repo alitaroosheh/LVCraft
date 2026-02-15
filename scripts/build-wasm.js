@@ -39,9 +39,40 @@ fs.mkdirSync(buildDir, { recursive: true });
 run('emcmake cmake ..', { cwd: buildDir });
 run('emmake make -j4', { cwd: buildDir });
 
-const src = path.join(buildDir, 'index.js');
+let src = path.join(buildDir, 'index.js');
 if (!fs.existsSync(src)) {
-  console.error('Build did not produce index.js');
+  const htmlPath = path.join(buildDir, 'index.html');
+  if (fs.existsSync(htmlPath)) {
+    const html = fs.readFileSync(htmlPath, 'utf-8');
+    // Emscripten with custom shell: {{{ SCRIPT }}} is replaced by raw JS (no script tags)
+    const afterLastScript = html.split(/<\/script>/i).pop();
+    const beforeBody = afterLastScript.split(/<\/body>/i)[0];
+    const rawJs = beforeBody ? beforeBody.trim() : '';
+    if (rawJs.length > 1000) {
+      fs.mkdirSync(outDir, { recursive: true });
+      fs.writeFileSync(outFile, rawJs, 'utf-8');
+      console.log('Done: media/wasm/lvgl.js (extracted from index.html)');
+      process.exit(0);
+    }
+    // Fallback: look for inline <script> blocks (non-custom shell)
+    const match = html.match(/<script[^>]*>([\s\S]*?)<\/script>/g);
+    if (match) {
+      const scripts = match
+        .map((tag) => {
+          const m = tag.match(/<script[^>]*>([\s\S]*?)<\/script>/);
+          return m ? m[1].trim() : '';
+        })
+        .filter((s) => s.length > 1000);
+      if (scripts.length > 0) {
+        const main = scripts.reduce((a, b) => (a.length > b.length ? a : b));
+        fs.mkdirSync(outDir, { recursive: true });
+        fs.writeFileSync(outFile, main, 'utf-8');
+        console.log('Done: media/wasm/lvgl.js (extracted from index.html)');
+        process.exit(0);
+      }
+    }
+  }
+  console.error('Build did not produce index.js or index.html with inline script');
   process.exit(1);
 }
 
