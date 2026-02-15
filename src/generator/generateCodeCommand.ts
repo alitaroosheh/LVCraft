@@ -61,12 +61,13 @@ export async function runGenerateCodeCommand(): Promise<void> {
   }
 
   let uiC = generateUiC(layout, lvproj, styles);
-  const initContent = preservedBlocks.get('init');
-  if (initContent !== undefined && initContent !== '') {
-    uiC = uiC.replace(
-      /(\/\* USER CODE BEGIN init \*\/)\s*(\/\* USER CODE END init \*\/)/,
-      (_, begin, end) => `${begin}\n${initContent}\n  ${end}`
+  for (const [id, content] of preservedBlocks) {
+    const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(
+      `(\\/\\*\\s*USER CODE BEGIN ${escaped}\\s*\\*\\/)\\s*[\\s\\S]*?\\s*(\\/\\*\\s*USER CODE END ${escaped}\\s*\\*\\/)`,
+      'g'
     );
+    uiC = uiC.replace(re, (_, begin, end) => `${begin}\n${content}\n  ${end}`);
   }
 
   const uiH = generateUiH(layout, lvproj, styles);

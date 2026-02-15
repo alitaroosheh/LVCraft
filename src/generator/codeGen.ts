@@ -29,6 +29,19 @@ function assignIds(root: LayoutWidget, prefix: string, out: Map<string, string>)
   });
 }
 
+/** Event property -> LVGL event code */
+const EVENT_MAP: Record<string, string> = {
+  onClick: 'LV_EVENT_CLICKED',
+  onClicked: 'LV_EVENT_CLICKED',
+  onValueChanged: 'LV_EVENT_VALUE_CHANGED',
+  onPressed: 'LV_EVENT_PRESSED',
+  onReleased: 'LV_EVENT_RELEASED',
+  onFocus: 'LV_EVENT_FOCUSED',
+  onFocused: 'LV_EVENT_FOCUSED',
+  onDefocus: 'LV_EVENT_DEFOCUSED',
+  onDefocused: 'LV_EVENT_DEFOCUSED'
+};
+
 /** Map LVGL widget type to create function name */
 function lvCreateFunc(type: string): string {
   const t = type.toLowerCase();
@@ -76,6 +89,51 @@ function emitStyleProps(style: SharedStyle, varName: string, indent: string): st
   return lines;
 }
 
+/** Get event key suffix for handler name, e.g. onClicked -> clicked */
+function eventKeySuffix(key: string): string {
+  const s = key.replace(/^on/, '');
+  return s.charAt(0).toLowerCase() + s.slice(1);
+}
+
+/** Resolve handler name from binding; returns [handlerName, isAutoStub] */
+function resolveEventHandler(
+  binding: unknown,
+  widgetId: string,
+  eventKey: string
+): [string, boolean] | null {
+  if (binding === undefined || binding === null) return null;
+  if (typeof binding === 'string' && binding.trim()) {
+    return [validCId(binding.trim()), false];
+  }
+  if (binding === true || (typeof binding === 'object' && binding !== null)) {
+    const suffix = eventKeySuffix(eventKey);
+    return [`ui_${widgetId}_${suffix}`, true];
+  }
+  return null;
+}
+
+/** Collect event bindings for a widget: eventKey -> [handlerName, isAutoStub] */
+function getWidgetEventBindings(
+  w: LayoutWidget,
+  widgetId: string
+): Array<{ eventCode: string; handlerName: string; guardId: string }> {
+  const out: Array<{ eventCode: string; handlerName: string; guardId: string }> = [];
+  for (const [key, code] of Object.entries(EVENT_MAP)) {
+    const binding = w[key];
+    const resolved = resolveEventHandler(binding, widgetId, key);
+    if (resolved) {
+      const [handlerName, isAuto] = resolved;
+      const guardId = isAuto ? `${widgetId}_${eventKeySuffix(key)}` : undefined;
+      out.push({
+        eventCode: code,
+        handlerName,
+        guardId: guardId ?? handlerName
+      });
+    }
+  }
+  return out;
+}
+
 /** Emit C code for a widget subtree */
 function emitWidget(
   w: LayoutWidget,
@@ -100,7 +158,33 @@ function emitWidget(
       ...emitWidget(c, `${path}_${i}`, varName, idMap, styleMap, indent)
     );
   });
+  const bindings = getWidgetEventBindings(w, id);
+  for (const { eventCode, handlerName } of bindings) {
+    lines.push(`${indent}lv_obj_add_event_cb(${varName}, ${handlerName}, ${eventCode}, NULL);`);
+  }
   return lines;
+}
+
+/** Collect auto-generated event handler stubs for the layout */
+function collectEventHandlerStubs(
+  root: LayoutWidget,
+  idMap: Map<string, string>,
+  path = 'root'
+): Array<{ handlerName: string; guardId: string }> {
+  const stubs: Array<{ handlerName: string; guardId: string }> = [];
+  const id = idMap.get(path);
+  if (id) {
+    const bindings = getWidgetEventBindings(root, id);
+    for (const b of bindings) {
+      if (b.handlerName.startsWith('ui_')) {
+        stubs.push({ handlerName: b.handlerName, guardId: b.guardId });
+      }
+    }
+  }
+  (root.children ?? []).forEach((c, i) => {
+    stubs.push(...collectEventHandlerStubs(c, idMap, `${path}_${i}`));
+  });
+  return stubs;
 }
 
 /** Build map of shared style id -> valid C id */
@@ -180,7 +264,19 @@ export function generateUiC(
   idMap.forEach((id) => {
     lines.push(`lv_obj_t *ui_${id} = NULL;`);
   });
-  lines.push('');
+  const eventStubs = collectEventHandlerStubs(layout.root, idMap);
+  const seenHandlers = new Set<string>();
+  for (const { handlerName, guardId } of eventStubs) {
+    if (seenHandlers.has(handlerName)) continue;
+    seenHandlers.add(handlerName);
+    lines.push('');
+    lines.push(`static void ${handlerName}(lv_event_t * e) {`);
+    lines.push(`  lv_obj_t * obj = lv_event_get_target(e);`);
+    lines.push(`  /* USER CODE BEGIN ${guardId} */`);
+    lines.push(`  /* USER CODE END ${guardId} */`);
+    lines.push('}');
+  }
+  if (eventStubs.length) lines.push('');
   lines.push('void ui_init(void)');
   lines.push('{');
   const body: string[] = [];

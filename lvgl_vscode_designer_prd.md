@@ -481,3 +481,10 @@ Status legend:
 - wasm/ README: build lv_web_emscripten and copy output to `.lvcraft/wasm/`
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 19 — Event binding in code generator
+- Layout widgets: `onClick`, `onValueChanged`, `onPressed`, `onReleased`, `onFocus`, `onDefocus` (string = handler name, `true` = auto stub)
+- Code generator: emit `lv_obj_add_event_cb` and static handler stubs with USER CODE guards
+- Regeneration preserves event handler USER CODE blocks
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

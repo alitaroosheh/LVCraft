@@ -33,10 +33,26 @@ export interface Layout {
   root?: LayoutWidget;
 }
 
+/** Event binding: string = handler name, true/object = auto-generate stub */
+export type EventBinding = string | true | Record<string, unknown>;
+
 export interface LayoutWidget {
   type: string;
   id?: string;
   children?: LayoutWidget[];
+  /** LV_EVENT_CLICKED */
+  onClick?: EventBinding;
+  onClicked?: EventBinding;
+  /** LV_EVENT_VALUE_CHANGED */
+  onValueChanged?: EventBinding;
+  /** LV_EVENT_PRESSED / LV_EVENT_RELEASED */
+  onPressed?: EventBinding;
+  onReleased?: EventBinding;
+  /** LV_EVENT_FOCUSED / LV_EVENT_DEFOCUSED */
+  onFocus?: EventBinding;
+  onFocused?: EventBinding;
+  onDefocus?: EventBinding;
+  onDefocused?: EventBinding;
   [key: string]: unknown;
 }
 

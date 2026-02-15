@@ -5,6 +5,12 @@ All notable changes to LVCraft will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Event binding in code generator**: Layout widgets support event properties (`onClick`, `onValueChanged`, `onPressed`, `onReleased`, `onFocus`, `onDefocus`). Use a string for custom handler name or `true` for auto-generated stub. Code generator emits `lv_obj_add_event_cb` and USER CODE-guarded handler stubs.
+
 ## [0.0.1] - 2026-02-15
 
 ### Added
