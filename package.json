@@ -1,0 +1,47 @@
+{
+  "name": "lvcraft",
+  "displayName": "LVCraft",
+  "description": "Visual UI designer for LVGL inside VS Code.",
+  "version": "0.0.1",
+  "license": "MIT",
+  "publisher": "lvcraft",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onCommand:lvcraft.openDesigner"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "lvcraft.openDesigner",
+        "title": "LVCraft: Open Designer"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./tsconfig.json",
+    "compile-tests": "tsc -p ./tsconfig.test.json",
+    "build": "npm run compile && npm run compile-tests",
+    "watch": "tsc -watch -p ./tsconfig.json",
+    "lint": "eslint --max-warnings=0 \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format": "prettier -w .",
+    "package": "vsce package",
+    "pretest": "npm run build && npm run lint",
+    "test": "node ./dist/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.13.5",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/test-cli": "^0.0.12",
+    "eslint": "^9.20.1",
+    "mocha": "^11.1.0",
+    "prettier": "^3.5.1",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.25.0",
+    "@vscode/vsce": "^3.7.1"
+  }
+}
+

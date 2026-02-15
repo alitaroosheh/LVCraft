@@ -1,0 +1,366 @@
+
+# LVGL VSCode Designer – Full Product Requirements & Technical Specification (PRD + TSD)
+
+---
+
+# 1. Product Overview
+
+## 1.1 Purpose
+Create a **professional visual UI designer for LVGL** integrated into **Visual Studio Code** that allows developers to design embedded UIs visually while producing **clean, deterministic, firmware-ready C code** without manual UI coding.
+
+The tool must behave similarly to WinForms / Qt Designer in user experience while keeping LVGL’s performance and embedded constraints.
+
+---
+
+## 1.2 Target Users
+- Embedded firmware engineers
+- IoT platform developers
+- UI/UX engineers working on MCUs
+- Hardware startups
+- LVGL beginners and advanced users
+
+---
+
+## 1.3 Core Value
+- Eliminates manual LVGL UI coding
+- Ensures firmware-accurate preview
+- Safe code generation
+- Cross-platform workflow
+- Professional developer tooling
+
+---
+
+# 2. Core Design Principles
+
+## 2.1 Runtime = Preview
+The rendering engine in preview **must be the same LVGL runtime** used in firmware.  
+No mock engines, no CSS rendering, no screenshot mirroring.
+
+## 2.2 Determinism
+Same input project must always generate the same output files.
+
+## 2.3 Separation of Concerns
+- Designer Layout
+- Generated UI Code
+- User Business Logic
+
+These must never mix.
+
+## 2.4 Cross-Platform Neutrality
+Must function identically on:
+- Windows
+- Linux
+- macOS
+
+No OS-specific binaries required.
+
+---
+
+# 3. System Architecture
+
+```
++---------------------+
+| VSCode Extension    |
++----------+----------+
+           |
+           v
++---------------------+
+| WebView UI          |
+| (React/Vue/Svelte)  |
++----------+----------+
+           |
+           v
++---------------------+
+| LVGL Runtime (WASM) |
++----------+----------+
+           |
+           v
++---------------------+
+| Code Generator      |
+| Node / Rust / Go    |
++----------+----------+
+           |
+           v
++---------------------+
+| User Firmware Repo  |
++---------------------+
+```
+
+---
+
+# 4. Modules
+
+---
+
+## 4.1 Project Management Module
+
+### Features
+- Create Project Wizard
+- Open Existing Project
+- Save / Save As
+- Duplicate Project
+- Export Firmware Package
+- Import External Assets
+
+### Project Metadata
+- LVGL version
+- Target MCU
+- Resolution
+- Color depth
+- Memory profile
+- Theme
+- Generator config
+- Asset manifest hash
+
+---
+
+## 4.2 File Structure
+
+```
+project-root/
+  lvproj.json
+  layout.json
+  styles.json
+  assets.json
+  generated/
+  user/
+  backups/
+```
+
+---
+
+## 4.3 Designer UI Module
+
+### Canvas Features
+- Zoom / Pan
+- Pixel grid overlay
+- Snap to grid
+- Bounding box display
+- Multi-select
+- Alignment tools
+
+### Widget Tree
+- Drag reorder
+- Parent/child relationships
+- Visibility toggle
+- Lock state
+- Group/ungroup
+
+---
+
+## 4.4 Styling System
+
+### Style Types
+- Inline
+- Shared
+- Global Theme
+
+### States
+- Default
+- Pressed
+- Focused
+- Disabled
+- Checked
+
+---
+
+## 4.5 Preview Engine
+
+### Technology
+- LVGL compiled with **Emscripten → WASM**
+- Render to `<canvas>`
+- Hardware acceleration optional
+
+### Event Handling
+- Mouse → Touch mapping
+- Keyboard mapping
+- Scroll wheel mapping
+
+### Optimization
+- Dirty rectangle redraw
+- Frame limiter
+- Resolution downscale mode
+
+---
+
+## 4.6 Code Generator
+
+### Requirements
+- Deterministic output
+- Stable IDs
+- Modular file splitting
+- Configurable naming conventions
+
+### Output Layout
+```
+ui/
+  ui.c
+  ui.h
+  screens/
+  widgets/
+  styles/
+  assets/
+```
+
+---
+
+## 4.7 User Code Protection
+
+### Guard Regions
+```
+/* USER CODE BEGIN ID */
+/* USER CODE END ID */
+```
+
+### Rules
+- Never overwrite guarded blocks
+- Preserve whitespace
+- Detect missing markers
+- Warn user on corruption
+
+---
+
+## 4.8 Asset Pipeline
+
+### Supported Types
+- PNG
+- JPG
+- BMP
+- TTF → LVGL Font
+- SVG → Rasterized
+
+### Transformations
+- Compression
+- Color conversion
+- Scaling
+- Binary packing
+
+---
+
+## 4.9 Event Binding
+
+### Modes
+- Function binding
+- Auto stub generation
+- Parameter injection
+- Global handler
+
+---
+
+# 5. Non-Functional Requirements
+
+## Performance
+- Preview frame < 16ms
+- Load < 2s
+- Code generation < 1s incremental
+
+## Stability
+- Crash recovery
+- Auto-save
+- Versioned backups
+
+## Security
+- Sandboxed WASM
+- No arbitrary execution
+
+---
+
+# 6. Reliability & Recovery
+
+- Autosave interval configurable
+- Snapshot system
+- Crash restore dialog
+- Unlimited undo/redo
+- Safe file writes
+
+---
+
+# 7. Extensibility
+
+- Plugin API
+- Custom widgets
+- Custom exporters
+- Theme packs
+
+---
+
+# 8. VSCode Integration
+
+### Panels
+- Widget Tree
+- Property Inspector
+- Style Manager
+- Asset Browser
+
+### Commands
+- Generate Code
+- Clean Generated
+- Open Simulator
+
+---
+
+# 9. Testing
+
+### Unit
+- Generator
+- Parser
+- Merge engine
+
+### Integration
+- WASM runtime
+- Asset pipeline
+
+### UI
+- Drag/drop
+- Save/load cycles
+
+---
+
+# 10. Future Expansion
+
+- Hardware live preview
+- Collaboration
+- Cloud asset sync
+- AI assisted layout
+
+---
+
+# 11. Success Criteria
+
+- No manual editing of generated UI files
+- Preview identical to firmware
+- Git-friendly diffs
+- Cross-OS compatibility
+- Zero data loss
+- Responsive performance
+
+---
+
+# 12. Anti-Goals
+
+- Not a mock tool
+- Not screenshot mirroring
+- Not MCU vendor-locked
+- Not cloud-locked
+- Not modifying business logic
+
+---
+
+This document defines a **production-grade LVGL Visual Designer**, not a prototype.  
+Every skipped section increases technical debt and reduces long-term maintainability.
+
+---
+
+# 13. Implementation Steps (Tracking)
+
+Status legend:
+- <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+- <mark style="background: #fefcbf; color: #744210; padding: 0 4px; border-radius: 3px;">In progress!</mark>
+
+## Step 1 — Project scaffold (VS Code extension)
+- TypeScript extension skeleton (`src/extension.ts`)
+- Minimal designer WebView panel shell
+- Build + lint + test wiring
+- Debug configs (`.vscode/launch.json`, `.vscode/tasks.json`)
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
