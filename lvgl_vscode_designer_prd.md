@@ -372,3 +372,10 @@ Status legend:
 - Project structure (`generated/`, `user/`, `backups/`)
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 3 — Designer project context
+- Designer requires LVCraft project open (workspace with `lvproj.json`)
+- Load and display project metadata (LVGL version, resolution, color depth)
+- Canvas placeholder with project resolution
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
