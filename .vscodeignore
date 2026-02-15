@@ -5,6 +5,7 @@ src/**
 test/**
 dist/test/**
 node_modules/**
+deps/**
 tsconfig.json
 tsconfig.test.json
 eslint.config.mjs
@@ -13,3 +14,6 @@ prettier.config.cjs
 .editorconfig
 *.map
 .gitignore
+.gitmodules
+.github/**
+lvgl_vscode_designer_prd.md
