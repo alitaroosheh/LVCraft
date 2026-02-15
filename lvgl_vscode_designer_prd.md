@@ -434,3 +434,11 @@ Status legend:
 - Widget Tree: show `[styleId]` badge when widget has styleId
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 12 — Preview infrastructure (LVGL WASM bootstrap)
+- Real `<canvas>` sized to project resolution
+- Embed `layout`, `width`, `height` as `window.__LVCRAFT_PREVIEW__` for future LVGL loader
+- Canvas fallback: gray fill + border
+- README: LVGL WASM build instructions (lv_web_emscripten)
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

@@ -8,8 +8,9 @@ Visual UI designer for LVGL inside VS Code. Design embedded UIs visually and gen
 - **Designer Panel** — Widget tree, canvas placeholder, property inspector (3-panel layout)
 - **Code Generator** — Deterministic C output (`ui.c`, `ui.h`) from `layout.json`
 - **User Code Protection** — Guard regions preserved across regeneration
-- **Auto-refresh** — Designer updates when `layout.json` or `lvproj.json` changes
+- **Auto-refresh** — Designer updates when `layout.json`, `lvproj.json`, or `styles.json` changes
 - **Toolbar** — Generate Code and Refresh from the Designer
+- **Preview canvas** — Canvas area sized to project resolution; LVGL WASM integration planned
 
 ## Commands
 
@@ -41,6 +42,17 @@ project-root/
 2. Edit `layout.json` to add widgets (or use the Designer when ready).
 3. Run **LVCraft: Open Designer** to view the widget tree.
 4. Run **LVCraft: Generate Code** to produce C files in `generated/ui/`.
+
+## LVGL WASM Preview (planned)
+
+The Designer Canvas shows a placeholder. Full LVGL preview requires building LVGL with Emscripten:
+
+1. Install [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html)
+2. Clone [lv_web_emscripten](https://github.com/lvgl/lv_web_emscripten): `git clone --recursive https://github.com/lvgl/lv_web_emscripten.git`
+3. Build: `cd lv_web_emscripten && mkdir cmbuild && cd cmbuild && emcmake cmake .. && emmake make`
+4. Integrate the generated `lvgl.js` and `lvgl.wasm` into the extension (see PRD 4.5)
+
+Online demos: [lvgl.io/demos](https://lvgl.io/demos)
 
 ## Development
 

@@ -132,11 +132,16 @@ export class DesignerPanel {
       ? renderWidgetTree(layout.root)
       : '<span class="wt-empty">Empty</span>';
 
+    const previewData = JSON.stringify({ layout, width, height }).replace(
+      /<\//g,
+      '<\\/'
+    );
     const csp = [
       `default-src 'none';`,
       `img-src ${webview.cspSource} https: data:;`,
       `style-src ${webview.cspSource} 'unsafe-inline';`,
-      `script-src 'nonce-${nonce}';`
+      `script-src 'nonce-${nonce}' ${webview.cspSource};`,
+      `worker-src 'none';`
     ].join(' ');
 
     return /* html */ `<!doctype html>
@@ -166,7 +171,8 @@ export class DesignerPanel {
       .wt-node:hover { background: var(--vscode-list-hoverBackground); }
       .wt-style { font-size: 10px; color: var(--vscode-descriptionForeground); margin-left: 4px; }
       .wt-empty { color: var(--vscode-descriptionForeground); font-style: italic; }
-      .canvas-placeholder { border: 2px dashed var(--vscode-widget-border); background: var(--vscode-input-background); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--vscode-descriptionForeground); text-align: center; width: 100%; height: 100%; min-height: 120px; }
+      .preview-container { position: relative; display: flex; align-items: center; justify-content: center; min-height: 120px; background: #1e1e1e; }
+      .preview-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); color: var(--vscode-descriptionForeground); font-size: 12px; text-align: center; pointer-events: none; }
       .inspector-placeholder { color: var(--vscode-descriptionForeground); font-style: italic; }
     </style>
   </head>
@@ -186,9 +192,10 @@ export class DesignerPanel {
       </aside>
       <main class="panel" style="flex: 1;">
         <div class="panel-title">Canvas</div>
-        <div class="panel-body">
-          <div class="canvas-placeholder" style="min-width: ${Math.min(width, 300)}px; min-height: ${Math.min(height, 200)}px;">
-            ${width}×${height} — LVGL WASM preview in next step
+        <div class="panel-body preview-container">
+          <canvas id="lvcraft-preview-canvas" width="${width}" height="${height}" style="max-width: 100%; max-height: 100%; object-fit: contain; background: #1e1e1e;"></canvas>
+          <div id="lvcraft-preview-overlay" class="preview-overlay">
+            <span>LVGL WASM: not built. See README for build instructions.</span>
           </div>
         </div>
       </main>
@@ -199,6 +206,7 @@ export class DesignerPanel {
     </div>
     <script nonce="${nonce}">
       (function() {
+        window.__LVCRAFT_PREVIEW__ = ${previewData};
         const vscode = acquireVsCodeApi();
         document.querySelectorAll('.toolbar-btn').forEach(function(btn) {
           btn.addEventListener('click', function() {
@@ -206,6 +214,17 @@ export class DesignerPanel {
             if (action) vscode.postMessage({ type: action });
           });
         });
+        var c = document.getElementById('lvcraft-preview-canvas');
+        if (c && c.getContext) {
+          var ctx = c.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#2d2d2d';
+            ctx.fillRect(0, 0, c.width, c.height);
+            ctx.strokeStyle = '#404040';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(1, 1, c.width - 2, c.height - 2);
+          }
+        }
       })();
     </script>
   </body>
