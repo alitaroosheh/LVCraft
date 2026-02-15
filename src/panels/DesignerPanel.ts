@@ -11,10 +11,14 @@ function escapeHtml(s: string): string {
 function renderWidgetTree(w: LayoutWidget): string {
   const label = escapeHtml(w.id ?? w.type ?? '?');
   const type = escapeHtml(w.type);
+  const styleTag =
+    typeof w.styleId === 'string' && w.styleId
+      ? ` <span class="wt-style" title="style">[${escapeHtml(w.styleId)}]</span>`
+      : '';
   const children = (w.children ?? [])
     .map((c) => `<li>${renderWidgetTree(c)}</li>`)
     .join('');
-  return `<span class="wt-node" data-type="${type}">${label}</span>${children ? `<ul>${children}</ul>` : ''}`;
+  return `<span class="wt-node" data-type="${type}">${label}${styleTag}</span>${children ? `<ul>${children}</ul>` : ''}`;
 }
 
 export class DesignerPanel {
@@ -83,6 +87,9 @@ export class DesignerPanel {
     const watcher2 = vscode.workspace.createFileSystemWatcher(
       new vscode.RelativePattern(projectRoot, 'lvproj.json')
     );
+    const watcher3 = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(projectRoot, 'styles.json')
+    );
     const onProjectFileChange = () => {
       if (DesignerPanel.currentPanel === this) this._refresh();
     };
@@ -90,7 +97,9 @@ export class DesignerPanel {
     watcher1.onDidCreate(onProjectFileChange);
     watcher2.onDidChange(onProjectFileChange);
     watcher2.onDidCreate(onProjectFileChange);
-    this._disposables.push(watcher1, watcher2);
+    watcher3.onDidChange(onProjectFileChange);
+    watcher3.onDidCreate(onProjectFileChange);
+    this._disposables.push(watcher1, watcher2, watcher3);
   }
 
   private _refresh(): void {
@@ -155,6 +164,7 @@ export class DesignerPanel {
       .wt-tree ul { list-style: none; margin: 0; padding-left: 12px; }
       .wt-node { display: block; padding: 2px 4px; cursor: default; border-radius: 2px; }
       .wt-node:hover { background: var(--vscode-list-hoverBackground); }
+      .wt-style { font-size: 10px; color: var(--vscode-descriptionForeground); margin-left: 4px; }
       .wt-empty { color: var(--vscode-descriptionForeground); font-style: italic; }
       .canvas-placeholder { border: 2px dashed var(--vscode-widget-border); background: var(--vscode-input-background); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: var(--vscode-descriptionForeground); text-align: center; width: 100%; height: 100%; min-height: 120px; }
       .inspector-placeholder { color: var(--vscode-descriptionForeground); font-style: italic; }

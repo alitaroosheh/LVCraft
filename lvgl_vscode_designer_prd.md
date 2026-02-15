@@ -427,3 +427,10 @@ Status legend:
 - Widgets with `styleId` get `lv_obj_add_style(ui_xxx, &ui_style_yyy, 0)`
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 11 — CHANGELOG + Designer polish
+- `CHANGELOG.md` (Keep a Changelog format)
+- Designer: `styles.json` in file watcher (refresh on change)
+- Widget Tree: show `[styleId]` badge when widget has styleId
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
