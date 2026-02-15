@@ -43,11 +43,11 @@ project-root/
 3. Run **LVCraft: Open Designer** to view the widget tree.
 4. Run **LVCraft: Generate Code** to produce C files in `generated/ui/`.
 
-## LVGL WASM Preview
+## LVGL WASM Preview (automatic install)
 
-- **End users** — If you install a release that was built with `npm run build:wasm`, the Designer uses the bundled `media/wasm/lvgl.js` and LVGL preview works without any setup.
-- **Override** — Put `lvgl.js` (or `index.js`) in your project at `.lvcraft/wasm/` to use your own build.
-- **Developers** — Clone the repo, run `npm install` (inits the lv_web_emscripten submodule), then `npm run build:wasm` (requires [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) on PATH). See **[wasm/README.md](wasm/README.md)** for details (Windows, Linux, packaging).
+- **End users** — After you install the extension, it installs the LVGL WASM runtime automatically: on startup it downloads `lvgl.js` from the extension’s GitHub Release (if not already bundled or in global storage). No Emscripten or manual steps. You can also run **LVCraft: Install LVGL WASM Runtime** from the Command Palette.
+- **Releases** — For the auto-download to work, each GitHub Release must include a `lvgl.js` asset (run `npm run build:wasm` and attach `media/wasm/lvgl.js` as `lvgl.js`). See [wasm/README.md](wasm/README.md).
+- **Override** — Put `lvgl.js` in your project at `.lvcraft/wasm/` to use your own build.
 
 Online demos: [lvgl.io/demos](https://lvgl.io/demos)
 

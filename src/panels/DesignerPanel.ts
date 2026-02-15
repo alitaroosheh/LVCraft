@@ -1,9 +1,9 @@
-import * as path from 'path';
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { getNonce } from '../webview/getNonce';
 import { log } from '../infra/log';
 import { readLvProj, readLayout, readAssets } from '../project/projectService';
+import { resolveWasmPath } from '../wasm/wasmRuntimeInstaller';
 import type { LayoutWidget } from '../project/types';
 
 function escapeHtml(s: string): string {
@@ -28,11 +28,13 @@ export class DesignerPanel {
 
   private readonly _panel: vscode.WebviewPanel;
   private readonly _projectRoot: vscode.Uri;
+  private readonly _globalStorageUri: vscode.Uri;
   private readonly _disposables: vscode.Disposable[] = [];
 
   public static createOrShow(
     extensionUri: vscode.Uri,
-    projectRoot: vscode.Uri
+    projectRoot: vscode.Uri,
+    globalStorageUri: vscode.Uri
   ): DesignerPanel | undefined {
     const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
 
@@ -57,7 +59,7 @@ export class DesignerPanel {
       panel.iconPath = iconPath;
     }
 
-    const instance = new DesignerPanel(panel, extensionUri, projectRoot);
+    const instance = new DesignerPanel(panel, extensionUri, projectRoot, globalStorageUri);
     DesignerPanel.currentPanel = instance;
     return instance;
   }
@@ -67,11 +69,13 @@ export class DesignerPanel {
   private constructor(
     panel: vscode.WebviewPanel,
     extensionUri: vscode.Uri,
-    projectRoot: vscode.Uri
+    projectRoot: vscode.Uri,
+    globalStorageUri: vscode.Uri
   ) {
     this._panel = panel;
     this._projectRoot = projectRoot;
     this._extensionUri = extensionUri;
+    this._globalStorageUri = globalStorageUri;
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
     this._panel.webview.onDidReceiveMessage(
@@ -161,20 +165,14 @@ export class DesignerPanel {
       '<\\/'
     );
 
-    const wasmDir = path.join(this._projectRoot.fsPath, '.lvcraft', 'wasm');
+    const wasmPath = resolveWasmPath(
+      this._projectRoot.fsPath,
+      this._extensionUri,
+      this._globalStorageUri
+    );
     let lvglScriptUri = '';
-    const lvglJs = path.join(wasmDir, 'lvgl.js');
-    const indexJs = path.join(wasmDir, 'index.js');
-    if (fs.existsSync(lvglJs)) {
-      lvglScriptUri = webview.asWebviewUri(vscode.Uri.file(lvglJs)).toString();
-    } else if (fs.existsSync(indexJs)) {
-      lvglScriptUri = webview.asWebviewUri(vscode.Uri.file(indexJs)).toString();
-    }
-    if (!lvglScriptUri) {
-      const extMediaWasm = path.join(this._extensionUri.fsPath, 'media', 'wasm', 'lvgl.js');
-      if (fs.existsSync(extMediaWasm)) {
-        lvglScriptUri = webview.asWebviewUri(vscode.Uri.file(extMediaWasm)).toString();
-      }
+    if (wasmPath) {
+      lvglScriptUri = webview.asWebviewUri(vscode.Uri.file(wasmPath)).toString();
     }
     const lvglScriptUriForJs = lvglScriptUri.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 

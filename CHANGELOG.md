@@ -24,3 +24,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Asset Browser**: Panel lists images and fonts from assets.json; assets.json in file watcher
 - **LVGL WASM loader**: Load LVGL from project `.lvcraft/wasm/` (lvgl.js or index.js); hide overlay on success; wasm/README build instructions
 - **LVGL WASM from extension install**: lv_web_emscripten as git submodule (`deps/lv_web_emscripten`); postinstall inits submodules; `npm run build:wasm` builds to `media/wasm/lvgl.js` (Windows/Linux); Designer loads from extension media when project has no WASM
+- **Automatic LVGL WASM install (ESP-IDF style)**: On startup extension ensures LVGL WASM runtime; if not bundled, downloads `lvgl.js` from GitHub Release and saves to global storage. Command **LVCraft: Install LVGL WASM Runtime** for manual install. Designer resolves WASM from project → extension media → global storage

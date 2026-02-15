@@ -6,10 +6,16 @@ import { runCreateProjectWizard } from './project/createProjectWizard';
 import { runOpenProjectCommand } from './project/openProjectCommand';
 import { runGenerateCodeCommand } from './generator/generateCodeCommand';
 import { runCleanGeneratedCommand } from './generator/cleanGeneratedCommand';
+import {
+  ensureWasmRuntime,
+  ensureWasmRuntimeBackground
+} from './wasm/wasmRuntimeInstaller';
 
 export function activate(context: vscode.ExtensionContext) {
   log('Activated.');
   context.subscriptions.push(getLogChannel());
+
+  ensureWasmRuntimeBackground(context);
 
   context.subscriptions.push(
     vscode.commands.registerCommand('lvcraft.openDesigner', () => {
@@ -22,7 +28,11 @@ export function activate(context: vscode.ExtensionContext) {
         );
         return;
       }
-      DesignerPanel.createOrShow(context.extensionUri, vscode.Uri.file(projectRoot));
+      DesignerPanel.createOrShow(
+        context.extensionUri,
+        vscode.Uri.file(projectRoot),
+        context.globalStorageUri
+      );
     }),
     vscode.commands.registerCommand('lvcraft.createProject', () => runCreateProjectWizard()),
     vscode.commands.registerCommand('lvcraft.openProject', () => runOpenProjectCommand()),
@@ -38,7 +48,35 @@ export function activate(context: vscode.ExtensionContext) {
         );
         return;
       }
-      DesignerPanel.createOrShow(context.extensionUri, vscode.Uri.file(projectRoot));
+      DesignerPanel.createOrShow(
+        context.extensionUri,
+        vscode.Uri.file(projectRoot),
+        context.globalStorageUri
+      );
+    }),
+    vscode.commands.registerCommand('lvcraft.installWasmRuntime', async () => {
+      getLogChannel().show(true);
+      const result = await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'LVCraft: Installing LVGL WASM runtime...',
+          cancellable: false
+        },
+        async () => ensureWasmRuntime(context)
+      );
+      if (result === 'already-present') {
+        vscode.window.showInformationMessage(
+          'LVCraft: LVGL WASM runtime is already installed. Open Designer to use it.'
+        );
+      } else if (result === 'installed') {
+        vscode.window.showInformationMessage(
+          'LVCraft: LVGL WASM runtime installed. Open Designer to use it.'
+        );
+      } else {
+        vscode.window.showWarningMessage(
+          'LVCraft: Could not install LVGL WASM runtime. See Output > LVCraft for details. You can run `npm run build:wasm` locally or place lvgl.js in your project `.lvcraft/wasm/`.'
+        );
+      }
     })
   );
 }

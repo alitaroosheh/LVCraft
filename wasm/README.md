@@ -9,17 +9,36 @@ The Designer runs LVGL in the browser when a built LVGL + Emscripten bundle is a
 3. **Build** — Run `npm run build:wasm` to build LVGL from the submodule. Requires [Emscripten](https://emscripten.org/docs/getting_started/downloads.html) on your PATH (`emcc`, `emcmake`, `emmake`). Output is written to `media/wasm/lvgl.js`. Works on **Windows** and **Linux** (and macOS).
 4. **Packaging** — When creating the VSIX (`npm run package`), include `media/wasm/lvgl.js` so that **end users get LVGL preview as soon as they install the extension** (no Emscripten or manual build on their machine). So: run `npm run build:wasm` before `npm run package` when releasing.
 
+## Automatic install (like ESP-IDF)
+
+After you install the extension:
+
+1. **On startup** — The extension activates and, in the background, ensures the LVGL WASM runtime is available. If `media/wasm/lvgl.js` is not bundled and global storage does not have it yet, it **downloads** `lvgl.js` from the extension’s GitHub Release (e.g. `v0.0.1`) and saves it to VS Code global storage. No Emscripten or manual steps required.
+2. **Manual install** — You can run **LVCraft: Install LVGL WASM Runtime** from the Command Palette to trigger the download and see progress.
+
+For this to work, each release must have a **Release asset** named `lvgl.js`. The [GitHub Action](.github/workflows/release.yml) builds it automatically when you push a tag.
+
+**Triggering the workflow** — Push one of these tags:
+
+- `prerelease` or `prerelease-*`
+- `release` or `release-*`
+- `v*` (e.g. `v0.0.1`)
+
+The workflow builds `lvgl.js` (Emscripten) and the VSIX, then creates a GitHub Release with both as assets. The installer tries `v{version}`, then `release`, then `prerelease`.
+
 ## Load order
 
 The Designer loads LVGL WASM in this order:
 
 1. **Project** — `.lvcraft/wasm/lvgl.js` or `.lvcraft/wasm/index.js` in the LVCraft project (folder with `lvproj.json`). Use this to override with a custom build.
-2. **Extension** — `media/wasm/lvgl.js` inside the installed extension. Used when the project has no WASM files (e.g. after installing the .vsix that was built with `build:wasm`).
+2. **Extension bundled** — `media/wasm/lvgl.js` inside the installed extension (if the VSIX was built with `build:wasm`).
+3. **Global storage** — `lvgl.js` in the extension’s global storage (downloaded on first run if no bundled or project WASM).
 
 ## As an end user (no Emscripten)
 
-- Install the LVCraft extension from a .vsix that was packaged with `media/wasm/lvgl.js` (see above). Open the Designer; LVGL preview should work.
-- Or: get `lvgl.js` (or `index.js`) from someone who built it, put it in your project at `.lvcraft/wasm/lvgl.js`, and open the Designer.
+- Install the LVCraft extension (from VSIX or marketplace). After VS Code starts, the extension will download the LVGL WASM runtime from the release if needed. Open the Designer; LVGL preview should work once the download has finished.
+- Or run **LVCraft: Install LVGL WASM Runtime** to install it manually.
+- Or put `lvgl.js` in your project at `.lvcraft/wasm/lvgl.js` to use your own build.
 
 ## As a developer (building WASM)
 
