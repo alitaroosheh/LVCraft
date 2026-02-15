@@ -491,6 +491,6 @@ Status legend:
 
 ## Step 20 — Position/size/text in code generator
 - Layout widgets with `x`, `y` emit `lv_obj_set_pos`; `width`, `height` emit `lv_obj_set_size` (or partial)
-- Label widgets with `text` emit `lv_label_set_text`
+- Text: label `text` → `lv_label_set_text`; textarea `text`, `placeholder` → `lv_textarea_set_text`, `lv_textarea_set_placeholder_text`; dropdown/roller `options` → `lv_dropdown_set_options`, `lv_roller_set_options`
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

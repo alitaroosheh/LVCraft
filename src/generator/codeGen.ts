@@ -168,9 +168,25 @@ function emitWidget(
     lines.push(`${indent}lv_obj_set_height(${varName}, ${Math.round(hh)});`);
   }
   const t = (w.type || '').toLowerCase();
-  if ((t === 'label' || t === 'lbl') && typeof w.text === 'string') {
+  if (typeof w.text === 'string') {
     const escaped = (w.text as string).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    lines.push(`${indent}lv_label_set_text(${varName}, "${escaped}");`);
+    if (t === 'label' || t === 'lbl') {
+      lines.push(`${indent}lv_label_set_text(${varName}, "${escaped}");`);
+    } else if (t === 'textarea') {
+      lines.push(`${indent}lv_textarea_set_text(${varName}, "${escaped}");`);
+    }
+  }
+  if (typeof w.placeholder === 'string' && (t === 'textarea' || t === 'text_area')) {
+    const escaped = (w.placeholder as string).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    lines.push(`${indent}lv_textarea_set_placeholder_text(${varName}, "${escaped}");`);
+  }
+  if (typeof w.options === 'string' && (t === 'dropdown' || t === 'roller')) {
+    const escaped = (w.options as string).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+    if (t === 'dropdown') {
+      lines.push(`${indent}lv_dropdown_set_options(${varName}, "${escaped}");`);
+    } else {
+      lines.push(`${indent}lv_roller_set_options(${varName}, "${escaped}", LV_ROLLER_MODE_NORMAL);`);
+    }
   }
   (w.children ?? []).forEach((c, i) => {
     lines.push(
