@@ -420,3 +420,10 @@ Status legend:
 - `.vscodeignore` for vsce package (exclude dev/test source)
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 10 — styles.json in code generator
+- Read `styles.json`, emit `lv_style_t` and `lv_style_init` for shared styles
+- Support: `bg_color`, `bg_opa`, `border_width`, `border_color`, `radius`, `pad_all`, `text_color`
+- Widgets with `styleId` get `lv_obj_add_style(ui_xxx, &ui_style_yyy, 0)`
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

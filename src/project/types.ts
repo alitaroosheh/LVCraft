@@ -46,10 +46,22 @@ export const DEFAULT_LAYOUT: Layout = {
   root: undefined
 };
 
+/** Shared style entry (styles.json shared array) */
+export interface SharedStyle extends Record<string, unknown> {
+  id: string;
+  bg_color?: number;
+  bg_opa?: number;
+  border_width?: number;
+  border_color?: number;
+  radius?: number;
+  pad_all?: number;
+  text_color?: number;
+}
+
 /** Shared and theme styles (styles.json) */
 export interface Styles {
   version: 1;
-  shared: Record<string, unknown>[];
+  shared: SharedStyle[];
   theme?: Record<string, unknown>;
 }
 

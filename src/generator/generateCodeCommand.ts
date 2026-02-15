@@ -1,7 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { findProjectRoot, readLayout, readLvProj } from '../project/projectService';
+import {
+  findProjectRoot,
+  readLayout,
+  readLvProj,
+  readStyles
+} from '../project/projectService';
 import { generateUiC, generateUiH } from './codeGen';
 import {
   extractGuardedBlocks,
@@ -28,6 +33,7 @@ export async function runGenerateCodeCommand(): Promise<void> {
 
   const lvproj = readLvProj(projectRoot);
   const layout = readLayout(projectRoot);
+  const styles = readStyles(projectRoot);
 
   if (!lvproj) {
     vscode.window.showErrorMessage('Invalid lvproj.json');
@@ -54,7 +60,7 @@ export async function runGenerateCodeCommand(): Promise<void> {
     }
   }
 
-  let uiC = generateUiC(layout, lvproj);
+  let uiC = generateUiC(layout, lvproj, styles);
   const initContent = preservedBlocks.get('init');
   if (initContent !== undefined && initContent !== '') {
     uiC = uiC.replace(
@@ -63,7 +69,7 @@ export async function runGenerateCodeCommand(): Promise<void> {
     );
   }
 
-  const uiH = generateUiH(layout, lvproj);
+  const uiH = generateUiH(layout, lvproj, styles);
 
   fs.writeFileSync(uiCPath, uiC, 'utf-8');
   fs.writeFileSync(path.join(uiDir, UI_H), uiH, 'utf-8');
