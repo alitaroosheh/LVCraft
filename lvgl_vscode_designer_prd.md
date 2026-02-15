@@ -461,3 +461,9 @@ Status legend:
 - Grid visibility toggle in toolbar
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 16 — Property Inspector: all properties
+- Show all widget properties (not just type, id, styleId, children)
+- Display x, y, width, height and any other keys from layout.json
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

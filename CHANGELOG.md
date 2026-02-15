@@ -20,3 +20,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Canvas Zoom/Pan**: Wheel zoom (25%–200%), middle-mouse pan, 100%/Fit toolbar buttons
 - **Widget selection + Property Inspector**: Click widget in tree to select; inspector shows type, id, styleId, children count
 - **Pixel grid overlay**: 10px grid on canvas; Grid toolbar button to toggle
+- **Property Inspector: all properties**: Shows type, id, styleId, x, y, width, height, children, and any other layout.json keys

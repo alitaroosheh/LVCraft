@@ -180,7 +180,8 @@ export class DesignerPanel {
       .inspector-row { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--vscode-widget-border); }
       .inspector-row:last-child { border-bottom: none; }
       .inspector-label { color: var(--vscode-descriptionForeground); min-width: 60px; }
-      .inspector-value { font-family: var(--vscode-editor-font-family, monospace); }
+      .inspector-value { font-family: var(--vscode-editor-font-family, monospace); word-break: break-all; }
+      .inspector-empty { color: var(--vscode-descriptionForeground); font-style: italic; }
     </style>
   </head>
   <body>
@@ -341,14 +342,31 @@ export class DesignerPanel {
           }
           return w;
         }
+        function formatProp(val) {
+          if (val === undefined || val === null) return '—';
+          if (Array.isArray(val)) return val.length + ' items';
+          if (typeof val === 'object') return JSON.stringify(val);
+          return String(val);
+        }
         function renderInspector(widget) {
           if (!widget) return '';
-          var children = widget.children || [];
-          var html = '<div class="inspector-row"><span class="inspector-label">type</span><span class="inspector-value">' + escapeHtml(String(widget.type || '—')) + '</span></div>';
-          html += '<div class="inspector-row"><span class="inspector-label">id</span><span class="inspector-value">' + escapeHtml(String(widget.id || '—')) + '</span></div>';
-          html += '<div class="inspector-row"><span class="inspector-label">styleId</span><span class="inspector-value">' + escapeHtml(String(widget.styleId || '—')) + '</span></div>';
-          html += '<div class="inspector-row"><span class="inspector-label">children</span><span class="inspector-value">' + children.length + '</span></div>';
-          return html;
+          var order = ['type', 'id', 'styleId', 'x', 'y', 'width', 'height', 'children'];
+          var seen = {};
+          var html = '';
+          for (var i = 0; i < order.length; i++) {
+            var k = order[i];
+            if (k in widget) {
+              seen[k] = true;
+              var v = k === 'children' ? (widget.children || []).length : widget[k];
+              html += '<div class="inspector-row"><span class="inspector-label">' + escapeHtml(k) + '</span><span class="inspector-value">' + escapeHtml(formatProp(v)) + '</span></div>';
+            }
+          }
+          var keys = Object.keys(widget).filter(function(k) { return !seen[k]; }).sort();
+          for (var j = 0; j < keys.length; j++) {
+            var key = keys[j];
+            html += '<div class="inspector-row"><span class="inspector-label">' + escapeHtml(key) + '</span><span class="inspector-value">' + escapeHtml(formatProp(widget[key])) + '</span></div>';
+          }
+          return html || '<div class="inspector-row inspector-empty">No properties</div>';
         }
         function escapeHtml(s) {
           return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
