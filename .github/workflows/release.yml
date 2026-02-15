@@ -47,6 +47,5 @@ jobs:
           files: |
             lvcraft-*.vsix
             media/wasm/lvgl.js
-          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
