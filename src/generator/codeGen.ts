@@ -153,6 +153,25 @@ function emitWidget(
   if (styleId && styleMap.has(styleId)) {
     lines.push(`${indent}lv_obj_add_style(${varName}, &ui_style_${validCId(styleId)}, 0);`);
   }
+  const x = typeof w.x === 'number' ? w.x : undefined;
+  const y = typeof w.y === 'number' ? w.y : undefined;
+  if (x !== undefined && y !== undefined) {
+    lines.push(`${indent}lv_obj_set_pos(${varName}, ${Math.round(x)}, ${Math.round(y)});`);
+  }
+  const ww = typeof w.width === 'number' ? w.width : undefined;
+  const hh = typeof w.height === 'number' ? w.height : undefined;
+  if (ww !== undefined && hh !== undefined) {
+    lines.push(`${indent}lv_obj_set_size(${varName}, ${Math.round(ww)}, ${Math.round(hh)});`);
+  } else if (ww !== undefined) {
+    lines.push(`${indent}lv_obj_set_width(${varName}, ${Math.round(ww)});`);
+  } else if (hh !== undefined) {
+    lines.push(`${indent}lv_obj_set_height(${varName}, ${Math.round(hh)});`);
+  }
+  const t = (w.type || '').toLowerCase();
+  if ((t === 'label' || t === 'lbl') && typeof w.text === 'string') {
+    const escaped = (w.text as string).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    lines.push(`${indent}lv_label_set_text(${varName}, "${escaped}");`);
+  }
   (w.children ?? []).forEach((c, i) => {
     lines.push(
       ...emitWidget(c, `${path}_${i}`, varName, idMap, styleMap, indent)

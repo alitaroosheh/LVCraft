@@ -488,3 +488,9 @@ Status legend:
 - Regeneration preserves event handler USER CODE blocks
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 20 — Position/size/text in code generator
+- Layout widgets with `x`, `y` emit `lv_obj_set_pos`; `width`, `height` emit `lv_obj_set_size` (or partial)
+- Label widgets with `text` emit `lv_label_set_text`
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

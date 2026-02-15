@@ -6,7 +6,7 @@ Visual UI designer for LVGL inside VS Code. Design embedded UIs visually and gen
 
 - **Project Management** — Create, open, and manage LVCraft projects
 - **Designer Panel** — Widget tree, canvas placeholder, property inspector (3-panel layout)
-- **Code Generator** — Deterministic C output (`ui.c`, `ui.h`) from `layout.json`; event binding (`onClick`, `onValueChanged`, etc.) with USER CODE-guarded stubs
+- **Code Generator** — Deterministic C output (`ui.c`, `ui.h`) from `layout.json`; position/size (`x`, `y`, `width`, `height`), label `text`; event binding (`onClick`, etc.) with USER CODE-guarded stubs
 - **User Code Protection** — Guard regions preserved across regeneration
 - **Auto-refresh** — Designer updates when `layout.json`, `lvproj.json`, or `styles.json` changes
 - **Toolbar** — Generate Code and Refresh from the Designer
@@ -39,7 +39,7 @@ project-root/
 ## Getting Started
 
 1. Run **LVCraft: Create New Project** and follow the wizard.
-2. Edit `layout.json` to add widgets (use `onClick`, `onValueChanged`, etc. for event binding; `true` = auto stub).
+2. Edit `layout.json` to add widgets (use `x`, `y`, `width`, `height`, label `text`; `onClick`, `onValueChanged`, etc. for events; `true` = auto stub).
 3. Run **LVCraft: Open Designer** to view the widget tree.
 4. Run **LVCraft: Generate Code** to produce C files in `generated/ui/`.
 
