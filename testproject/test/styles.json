@@ -1,4 +1,18 @@
 {
   "version": 1,
-  "shared": []
+  "shared": [
+    {
+      "id": "title",
+      "text_color": 16711680,
+      "bg_color": 16777215,
+      "bg_opa": 255
+    },
+    {
+      "id": "card",
+      "bg_color": 15790320,
+      "bg_opa": 255,
+      "radius": 8,
+      "pad_all": 12
+    }
+  ]
 }

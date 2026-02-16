@@ -10,12 +10,22 @@
       {
         "type": "label",
         "id": "lbl_title",
+        "styleId": "title",
         "x": 20,
         "y": 20,
         "width": 200,
         "height": 30,
-        "text": "Hello",
-        "textColor": 16711680
+        "text": "Hello"
+      },
+      {
+        "type": "label",
+        "id": "lbl_sub",
+        "x": 20,
+        "y": 60,
+        "width": 180,
+        "height": 24,
+        "text": "Inline blue",
+        "textColor": 255
       }
     ]
   }

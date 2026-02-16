@@ -72,6 +72,16 @@ void lvcraft_obj_set_style_text_color(lv_obj_t *obj, uint32_t hex_color)
     if (obj) lv_obj_set_style_text_color(obj, lv_color_hex(hex_color), 0);
 }
 
+/** Set object background color and opacity from JS. bg_hex 0xRRGGBB; bg_opa 0..255, or -1 to skip. */
+void lvcraft_obj_set_style_bg(lv_obj_t *obj, uint32_t bg_hex, int32_t bg_opa)
+{
+    if (!obj) return;
+    if (bg_hex <= 0xFFFFFFu)
+        lv_obj_set_style_bg_color(obj, lv_color_hex(bg_hex), 0);
+    if (bg_opa >= 0 && bg_opa <= 255)
+        lv_obj_set_style_bg_opa(obj, (lv_opa_t)bg_opa, 0);
+}
+
 static void lv_example_noop(void) {
 }
 

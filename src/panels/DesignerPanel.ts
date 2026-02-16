@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { getNonce } from '../webview/getNonce';
 import { log } from '../infra/log';
-import { readLvProj, readLayout, readAssets } from '../project/projectService';
+import { readLvProj, readLayout, readAssets, readStyles } from '../project/projectService';
 import { resolveWasmPath } from '../wasm/wasmRuntimeInstaller';
 import type { LayoutWidget } from '../project/types';
 
@@ -156,6 +156,7 @@ export class DesignerPanel {
     const nonce = getNonce();
     const lvproj = readLvProj(this._projectRoot.fsPath);
     const layout = readLayout(this._projectRoot.fsPath);
+    const styles = readStyles(this._projectRoot.fsPath);
     const assets = readAssets(this._projectRoot.fsPath);
 
     const width = Math.max(1, lvproj?.resolution?.width ?? 320);
@@ -179,7 +180,7 @@ export class DesignerPanel {
           (assetFonts ? `<div class="asset-section"><div class="asset-section-title">Fonts</div>${assetFonts}</div>` : '')
         : '<span class="asset-empty">No assets. Edit assets.json</span>';
 
-    const previewData = JSON.stringify({ layout, width, height }).replace(
+    const previewData = JSON.stringify({ layout, width, height, styles }).replace(
       /<\//g,
       '<\\/'
     );
@@ -396,6 +397,9 @@ export class DesignerPanel {
           var canvasEl = document.getElementById('canvas');
           var badgeEl = document.getElementById('lvcraft-debug-badge');
           var layout = (window.__LVCRAFT_PREVIEW__ && window.__LVCRAFT_PREVIEW__.layout) || null;
+          var stylesData = (window.__LVCRAFT_PREVIEW__ && window.__LVCRAFT_PREVIEW__.styles) || {};
+          var styleById = {};
+          (stylesData.shared || []).forEach(function(s) { if (s && typeof s.id === 'string') styleById[s.id] = s; });
           var w = Math.max(1, parseInt(W, 10) || 320);
           var h = Math.max(1, parseInt(H, 10) || 240);
           [canvasEl, document.getElementById('lvcraft-grid-canvas'), document.getElementById('lvcraft-selection-canvas')].forEach(function(c) {
@@ -411,13 +415,14 @@ export class DesignerPanel {
                   _lv_obj_create: !!Module._lv_obj_create,
                   _lv_label_create: !!Module._lv_label_create,
                   _lv_label_set_text: !!Module._lv_label_set_text,
-                  _lvcraft_obj_set_style_text_color: !!Module._lvcraft_obj_set_style_text_color
+                  _lvcraft_obj_set_style_text_color: !!Module._lvcraft_obj_set_style_text_color,
+                  _lvcraft_obj_set_style_bg: !!Module._lvcraft_obj_set_style_bg
                 };
-                var exOk = [ex._lv_screen_active, ex._lv_obj_clean, ex._lv_obj_create, ex._lv_label_create, ex._lv_label_set_text, ex._lvcraft_obj_set_style_text_color].filter(Boolean).length;
+                var exOk = [ex._lv_screen_active, ex._lv_obj_clean, ex._lv_obj_create, ex._lv_label_create, ex._lv_label_set_text, ex._lvcraft_obj_set_style_text_color, ex._lvcraft_obj_set_style_bg].filter(Boolean).length;
                 badgeEl.textContent =
                   'LVCraft preview | canvas=' + (canvasEl ? canvasEl.id : 'null') +
                   ' | layout=' + (layout ? 'y' : 'n') + ' root=' + (hasRoot ? 'y' : 'n') +
-                  ' | exports=' + exOk + '/6';
+                  ' | exports=' + exOk + '/7';
               }
             } catch (e) {}
             if (overlayEl) {
@@ -434,7 +439,7 @@ export class DesignerPanel {
               try {
                 var scr = Module._lv_screen_active();
                 if (!scr) {
-                  if (badgeEl) badgeEl.textContent = badgeEl.textContent.replace(new RegExp(' \\| exports=[0-9]+/6$'), '') + ' wait=' + String(attempt);
+                  if (badgeEl) badgeEl.textContent = badgeEl.textContent.replace(new RegExp(' \\| exports=[0-9]+/7$'), '') + ' wait=' + String(attempt);
                   if (attempt < 60) setTimeout(function() { tryBuild(attempt + 1); }, 50);
                   return;
                 }
@@ -457,6 +462,7 @@ export class DesignerPanel {
                   var setHeight = Module.cwrap('lv_obj_set_height', null, ['number', 'number']);
                   var setLabelText = Module.cwrap('lv_label_set_text', null, ['number', 'string']);
                   var setTextColor = Module._lvcraft_obj_set_style_text_color ? Module.cwrap('lvcraft_obj_set_style_text_color', null, ['number', 'number']) : null;
+                  var setBg = Module._lvcraft_obj_set_style_bg ? Module.cwrap('lvcraft_obj_set_style_bg', null, ['number', 'number', 'number']) : null;
                   var setTextareaText = Module._lv_textarea_set_text ? Module.cwrap('lv_textarea_set_text', null, ['number', 'string']) : null;
                   var setTextareaPlaceholder = Module._lv_textarea_set_placeholder_text ? Module.cwrap('lv_textarea_set_placeholder_text', null, ['number', 'string']) : null;
                   var setSliderValue = Module._lv_slider_set_value ? Module.cwrap('lv_slider_set_value', null, ['number', 'number', 'number']) : null;
@@ -482,22 +488,34 @@ export class DesignerPanel {
                     if (typeof w.width === 'number' && typeof w.height === 'number') setSize(obj, Math.round(w.width), Math.round(w.height));
                     else if (typeof w.width === 'number') setWidth(obj, Math.round(w.width));
                     else if (typeof w.height === 'number') setHeight(obj, Math.round(w.height));
+                    var style = (typeof w.styleId === 'string' && w.styleId) ? styleById[w.styleId] : null;
+                    if (style && setBg) {
+                      var bgHex = (typeof style.bg_color === 'number') ? ((style.bg_color >>> 0) & 0xffffff) : 0x1000000;
+                      var bgOpa = (typeof style.bg_opa === 'number') ? style.bg_opa : -1;
+                      setBg(obj, bgHex, bgOpa);
+                    }
+                    var textClr = (typeof w.textColor === 'number') ? (w.textColor >>> 0) & 0xffffff : (style && typeof style.text_color === 'number') ? (style.text_color >>> 0) & 0xffffff : 0x000000;
                     if (t === 'label' || t === 'lbl') {
                       if (typeof w.text === 'string') setLabelText(obj, w.text);
-                      if (setTextColor) setTextColor(obj, (typeof w.textColor === 'number' ? w.textColor : 0x000000) >>> 0);
+                      if (setTextColor) setTextColor(obj, textClr);
                     }
                     else if (t === 'textarea' && setTextareaText) {
                       if (typeof w.text === 'string') setTextareaText(obj, w.text);
                       if (typeof w.placeholder === 'string' && setTextareaPlaceholder) setTextareaPlaceholder(obj, w.placeholder);
+                      if (setTextColor) setTextColor(obj, textClr);
                     }
                     else if (t === 'slider' && setSliderValue && typeof w.value === 'number') setSliderValue(obj, Math.round(w.value), 1);
                     else if (t === 'bar' && setBarValue && typeof w.value === 'number') setBarValue(obj, Math.round(w.value), 1);
-                    else if (t === 'checkbox' && setCheckboxText && typeof w.text === 'string') setCheckboxText(obj, w.text);
+                    else if (t === 'checkbox' && setCheckboxText) {
+                      if (typeof w.text === 'string') setCheckboxText(obj, w.text);
+                      if (setTextColor) setTextColor(obj, textClr);
+                    }
+                    else if ((t === 'btn' || t === 'button') && setTextColor) setTextColor(obj, textClr);
                     (w.children || []).forEach(function(c) { createWidget(c, obj); });
                     return obj;
                   }
                   createWidget(layout.root, scr);
-                  if (badgeEl) badgeEl.textContent = badgeEl.textContent.replace(new RegExp(' wait=[0-9]+$'), '').replace(new RegExp(' \\| exports=[0-9]+/6$'), '') + ' | created=' + String(createdCount);
+                  if (badgeEl) badgeEl.textContent = badgeEl.textContent.replace(new RegExp(' wait=[0-9]+$'), '').replace(new RegExp(' \\| exports=[0-9]+/7$'), '') + ' | created=' + String(createdCount);
                   if (Module._lv_refr_now) {
                     Module._lv_refr_now(0);
                     setTimeout(function() { Module._lv_refr_now(0); }, 50);
