@@ -384,14 +384,45 @@ export class DesignerPanel {
         if (LVGL_SCRIPT_URI) {
           var overlayEl = document.getElementById('lvcraft-preview-overlay');
           var canvasEl = document.getElementById('lvcraft-preview-canvas');
+          var layout = (window.__LVCRAFT_PREVIEW__ && window.__LVCRAFT_PREVIEW__.layout) || null;
           window.Module = {
             canvas: canvasEl,
-            arguments: ['', String(W), String(H)]
+            arguments: ['', String(W), String(H)],
+            lvcraft_layout: layout ? JSON.stringify(layout) : null
           };
           var script = document.createElement('script');
           script.src = LVGL_SCRIPT_URI;
           script.onload = function() {
             if (overlayEl) overlayEl.style.display = 'none';
+            if (layout && layout.root && Module._lv_screen_active && Module._lv_obj_clean) {
+              try {
+                var scr = Module._lv_screen_active();
+                if (scr) {
+                  Module._lv_obj_clean(scr);
+                  var createObj = Module.cwrap('lv_obj_create', 'number', ['number']);
+                  var createBtn = Module.cwrap('lv_button_create', 'number', ['number']);
+                  var createLabel = Module.cwrap('lv_label_create', 'number', ['number']);
+                  var setPos = Module.cwrap('lv_obj_set_pos', null, ['number', 'number', 'number']);
+                  var setSize = Module.cwrap('lv_obj_set_size', null, ['number', 'number', 'number']);
+                  var setWidth = Module.cwrap('lv_obj_set_width', null, ['number', 'number']);
+                  var setHeight = Module.cwrap('lv_obj_set_height', null, ['number', 'number']);
+                  var setText = Module.cwrap('lv_label_set_text', null, ['number', 'string']);
+                  function createWidget(w, parent) {
+                    var t = (w.type || 'obj').toLowerCase();
+                    var obj = (t === 'btn' || t === 'button') ? createBtn(parent) : (t === 'label' || t === 'lbl') ? createLabel(parent) : createObj(parent);
+                    if (!obj) return 0;
+                    if (typeof w.x === 'number' && typeof w.y === 'number') setPos(obj, Math.round(w.x), Math.round(w.y));
+                    if (typeof w.width === 'number' && typeof w.height === 'number') setSize(obj, Math.round(w.width), Math.round(w.height));
+                    else if (typeof w.width === 'number') setWidth(obj, Math.round(w.width));
+                    else if (typeof w.height === 'number') setHeight(obj, Math.round(w.height));
+                    if ((t === 'label' || t === 'lbl') && typeof w.text === 'string') setText(obj, w.text);
+                    (w.children || []).forEach(function(c) { createWidget(c, obj); });
+                    return obj;
+                  }
+                  createWidget(layout.root, scr);
+                }
+              } catch (e) { console.warn('LVCraft layout preview:', e); }
+            }
           };
           script.onerror = function() {
             if (overlayEl) {

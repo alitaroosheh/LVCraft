@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Position/size in code generator**: Layout widgets with `x`, `y`, `width`, `height` emit `lv_obj_set_pos`, `lv_obj_set_size` (or `lv_obj_set_width`/`lv_obj_set_height`).
 - **Text in code generator**: Label `text` → `lv_label_set_text`; textarea `text` → `lv_textarea_set_text`, `placeholder` → `lv_textarea_set_placeholder_text`; dropdown/roller `options` → `lv_dropdown_set_options` / `lv_roller_set_options`.
 - **Bounding box display**: Selecting a widget in the Widget Tree shows a dashed selection rectangle on the canvas at the widget's position and size from layout.json.
+- **Live layout preview**: Designer canvas renders the user's layout.json in real LVGL WASM. Rebuild lvgl.js with `npm run build:wasm` to enable; when layout is present, the demo is skipped and widgets (obj, btn, label) are created from layout with pos/size/text.
 
 ## [0.0.1] - 2026-02-15
 

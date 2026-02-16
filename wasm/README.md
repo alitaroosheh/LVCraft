@@ -2,6 +2,8 @@
 
 The Designer runs LVGL in the browser when a built LVGL + Emscripten bundle is available. It can come from the **extension** (bundled) or from your **project** (override).
 
+**Live layout preview**: The build applies an LVCraft overlay that enables rendering your `layout.json` in real LVGL. When the Designer loads with a layout, it skips the default demo and creates widgets (obj, btn, label) with pos/size/text from your layout.
+
 ## How the extension gets LVGL WASM
 
 1. **Submodule** — This repo includes [lv_web_emscripten](https://github.com/lvgl/lv_web_emscripten) as a git submodule under `deps/lv_web_emscripten`.

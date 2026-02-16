@@ -501,3 +501,11 @@ Status legend:
 - Selection overlay canvas; cleared when no widget selected
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 22 — Live layout preview in LVGL WASM
+- Build patches lv_web_emscripten: skip demo when Module.lvcraft_layout is set; export LVGL APIs (lv_obj_create, lv_button_create, lv_label_create, lv_obj_set_pos, lv_obj_set_size, lv_label_set_text, etc.)
+- Designer passes layout.json to Module.lvcraft_layout before loading LVGL script
+- JS layout builder: clears screen and creates widget tree from layout (obj, btn, label; x, y, width, height, text)
+- Satisfies PRD 2.1 Runtime = Preview: Designer canvas shows user's layout rendered in real LVGL
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
