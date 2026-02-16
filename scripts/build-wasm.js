@@ -42,17 +42,43 @@ if (fs.existsSync(overlayMain)) {
   fs.copyFileSync(overlayMain, depMain);
   const cmakePath = path.join(depDir, 'CMakeLists.txt');
   let cmake = fs.readFileSync(cmakePath, 'utf-8');
-  const exports = [
-    '_lv_screen_active', '_lv_obj_clean', '_lv_obj_create', '_lv_obj_set_parent',
-    '_lv_button_create', '_lv_label_create', '_lv_img_create', '_lv_slider_create',
+  const exportedFns = [
+    /* When explicitly setting EXPORTED_FUNCTIONS, include _main or Emscripten won't run main(). */
+    '_main',
+    '_lv_screen_active', '_lv_obj_clean', '_lv_obj_create', '_lv_refr_now', '_lv_obj_set_parent',
+    '_lv_button_create', '_lv_label_create', '_lv_image_create', '_lv_slider_create',
     '_lv_bar_create', '_lv_switch_create', '_lv_checkbox_create', '_lv_textarea_create',
     '_lv_obj_set_pos', '_lv_obj_set_size', '_lv_obj_set_width', '_lv_obj_set_height',
     '_lv_label_set_text', '_lv_textarea_set_text', '_lv_textarea_set_placeholder_text',
-    '_lv_slider_set_value', '_lv_bar_set_value', '_lv_checkbox_set_text'
-  ].map((e) => `"${e}"`).join(',');
+    '_lv_slider_set_value', '_lv_bar_set_value', '_lv_checkbox_set_text',
+    '_lvcraft_obj_set_style_text_color'
+  ];
+  const exportsJson = `[${exportedFns.map((e) => `"${e}"`).join(',')}]`;
+  /* We need literal quotes for emcc, but this string lives inside a CMake double-quoted LINK_FLAGS.
+     Therefore we escape quotes as \" in the CMake file. */
+  const exportsForCmake = exportsJson.replace(/"/g, '\\"');
+  const runtimeMethodsJson = `["cwrap","ccall"]`;
+  const runtimeMethodsForCmake = runtimeMethodsJson.replace(/"/g, '\\"');
+
+  /* Ensure EXPORTED_FUNCTIONS is inside the LINK_FLAGS quoted value.
+     The previous implementation accidentally appended flags outside the quoted string, so exports were ignored. */
   cmake = cmake.replace(
-    /(LINK_FLAGS "--shell-file [^"]+ -s SINGLE_FILE=1 -s INITIAL_MEMORY=\d+")/,
-    `$1 -s EXPORTED_FUNCTIONS='[${exports}]'`
+    /set_target_properties\(\s*index\s+PROPERTIES\s+LINK_FLAGS\s+"([^"]*)"[^\n]*\n/,
+    (_m, flags) => {
+      let newFlags = String(flags);
+      newFlags = newFlags
+        .replace(/\s+-s\s+EXPORTED_FUNCTIONS='[^']*'/g, '')
+        .replace(/\s+-s\s+EXPORTED_FUNCTIONS=\[[^\]]*\]/g, '')
+        .replace(/\s+-s\s+EXPORTED_FUNCTIONS=[^\s]+/g, '')
+        .replace(/\s+-s\s+EXPORTED_RUNTIME_METHODS='[^']*'/g, '')
+        .replace(/\s+-s\s+EXPORTED_RUNTIME_METHODS=\[[^\]]*\]/g, '')
+        .replace(/\s+-s\s+EXPORTED_RUNTIME_METHODS=[^\s]+/g, '')
+        .trim();
+      /* Avoid shell-dependent quoting: pass JSON array with escaped quotes. */
+      newFlags += ` -s EXPORTED_FUNCTIONS=${exportsForCmake}`;
+      newFlags += ` -s EXPORTED_RUNTIME_METHODS=${runtimeMethodsForCmake}`;
+      return `set_target_properties(index PROPERTIES LINK_FLAGS "${newFlags}")\n`;
+    }
   );
   fs.writeFileSync(cmakePath, cmake);
 }

@@ -1,0 +1,33 @@
+{
+  "configurations": [
+    {
+      "name": "Emscripten (LVCraft overlay)",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/deps/lv_web_emscripten",
+        "${env:EMSDK}/upstream/emscripten/system/include",
+        "${env:EMSDK}/upstream/emscripten/cache/sysroot/include",
+        "${env:EMSDK}/upstream/emscripten/cache/sysroot/include/SDL2",
+        "D:/Works/emsdk/upstream/emscripten/system/include",
+        "D:/Works/emsdk/upstream/emscripten/cache/sysroot/include",
+        "D:/Works/emsdk/upstream/emscripten/cache/sysroot/include/SDL2",
+        "${env:USERPROFILE}/.emscripten_cache/wasm-obj/include",
+        "${env:HOME}/.emscripten_cache/wasm-obj/include"
+      ],
+      "defines": ["__EMSCRIPTEN__", "CHOSEN_DEMO=lv_demo_widgets"],
+      "compilerPath": "${env:EMSDK}/upstream/emscripten/emcc.bat",
+      "cStandard": "c17",
+      "intelliSenseMode": "linux-gcc-x64"
+    },
+    {
+      "name": "Win32",
+      "includePath": ["${workspaceFolder}/**"],
+      "defines": ["_DEBUG", "UNICODE", "_UNICODE"],
+      "windowsSdkVersion": "10.0.22621.0",
+      "compilerPath": "C:/msys64/ucrt64/bin/gcc.exe",
+      "cStandard": "c17",
+      "intelliSenseMode": "windows-gcc-x64"
+    }
+  ],
+  "version": 4
+}

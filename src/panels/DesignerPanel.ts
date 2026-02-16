@@ -79,11 +79,13 @@ export class DesignerPanel {
 
     this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
     this._panel.webview.onDidReceiveMessage(
-      (msg: { type?: string }) => {
+      (msg: { type?: string; payload?: unknown }) => {
         if (msg.type === 'generateCode') {
           void vscode.commands.executeCommand('lvcraft.generateCode');
         } else if (msg.type === 'refresh') {
           this._refresh();
+        } else if (msg.type === 'designerDebug' && msg.payload !== undefined) {
+          log('Designer preview: ' + JSON.stringify(msg.payload));
         }
       },
       null,
@@ -269,10 +271,11 @@ export class DesignerPanel {
         <div class="panel-title">Canvas</div>
         <div id="lvcraft-preview-container" class="panel-body preview-container">
           <div id="lvcraft-preview-viewport" class="preview-viewport">
-            <canvas id="lvcraft-preview-canvas" width="${width}" height="${height}" style="display: block; background: #e0e0e0;"></canvas>
+            <canvas id="canvas" data-lvcraft-id="lvcraft-preview-canvas" width="${width}" height="${height}" style="display: block; background: #e0e0e0;"></canvas>
             <canvas id="lvcraft-grid-canvas" width="${width}" height="${height}" style="position: absolute; top: 0; left: 0; pointer-events: none; display: none;"></canvas>
             <canvas id="lvcraft-selection-canvas" width="${width}" height="${height}" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
           </div>
+          <div id="lvcraft-debug-badge" style="position:absolute;left:6px;top:6px;z-index:5;padding:4px 6px;border-radius:4px;background:rgba(0,0,0,0.65);color:#fff;font:11px/1.3 var(--vscode-editor-font-family, monospace);white-space:pre;max-width:95%;pointer-events:none;"></div>
           <div id="lvcraft-preview-overlay" class="preview-overlay">
             <span>LVGL WASM: not built. See README for build instructions.</span>
           </div>
@@ -360,17 +363,7 @@ export class DesignerPanel {
             else if (action) vscode.postMessage({ type: action });
           });
         });
-        var c = document.getElementById('lvcraft-preview-canvas');
-        if (c && c.getContext) {
-          var ctx = c.getContext('2d');
-          if (ctx) {
-            ctx.fillStyle = '#e0e0e0';
-            ctx.fillRect(0, 0, c.width, c.height);
-            ctx.strokeStyle = '#666666';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(1, 1, c.width - 2, c.height - 2);
-          }
-        }
+        /* Do not get 2D context on #canvas: Emscripten/SDL may use it for WebGL. Use CSS background for placeholder look. */
         var gridVisible = false;
         var gridCanvas = document.getElementById('lvcraft-grid-canvas');
         function drawGrid() {
@@ -400,41 +393,59 @@ export class DesignerPanel {
         zoomFit();
         if (LVGL_SCRIPT_URI) {
           var overlayEl = document.getElementById('lvcraft-preview-overlay');
-          var canvasEl = document.getElementById('lvcraft-preview-canvas');
+          var canvasEl = document.getElementById('canvas');
+          var badgeEl = document.getElementById('lvcraft-debug-badge');
           var layout = (window.__LVCRAFT_PREVIEW__ && window.__LVCRAFT_PREVIEW__.layout) || null;
           var w = Math.max(1, parseInt(W, 10) || 320);
           var h = Math.max(1, parseInt(H, 10) || 240);
           [canvasEl, document.getElementById('lvcraft-grid-canvas'), document.getElementById('lvcraft-selection-canvas')].forEach(function(c) {
             if (c) { c.width = w; c.height = h; }
           });
-          window.Module = {
-            canvas: canvasEl,
-            arguments: ['', String(w), String(h)],
-            lvcraft_layout: layout ? JSON.stringify(layout) : null
-          };
-          var script = document.createElement('script');
-          script.id = 'mainScript';
-          script.src = LVGL_SCRIPT_URI;
-          script.onload = function() {
-            var hasRoot = layout && layout.root;
+          var hasRoot = layout && layout.root;
+          function runAfterRuntimeReady() {
+            try {
+              if (badgeEl) {
+                var ex = {
+                  _lv_screen_active: !!Module._lv_screen_active,
+                  _lv_obj_clean: !!Module._lv_obj_clean,
+                  _lv_obj_create: !!Module._lv_obj_create,
+                  _lv_label_create: !!Module._lv_label_create,
+                  _lv_label_set_text: !!Module._lv_label_set_text,
+                  _lvcraft_obj_set_style_text_color: !!Module._lvcraft_obj_set_style_text_color
+                };
+                var exOk = [ex._lv_screen_active, ex._lv_obj_clean, ex._lv_obj_create, ex._lv_label_create, ex._lv_label_set_text, ex._lvcraft_obj_set_style_text_color].filter(Boolean).length;
+                badgeEl.textContent =
+                  'LVCraft preview | canvas=' + (canvasEl ? canvasEl.id : 'null') +
+                  ' | layout=' + (layout ? 'y' : 'n') + ' root=' + (hasRoot ? 'y' : 'n') +
+                  ' | exports=' + exOk + '/6';
+              }
+            } catch (e) {}
             if (overlayEl) {
-              if (hasRoot) {
-                overlayEl.style.display = 'none';
-              } else {
+              if (hasRoot) overlayEl.style.display = 'none';
+              else {
                 overlayEl.style.display = 'flex';
                 var span = overlayEl.querySelector('span');
                 if (span) span.textContent = 'Layout empty. Add a root widget in layout.json to see the preview.';
               }
             }
-            if (hasRoot && Module._lv_screen_active && Module._lv_obj_clean) {
+            function tryBuild(attempt) {
+              if (!hasRoot) return;
+              if (!Module._lv_screen_active || !Module._lv_obj_clean) return;
               try {
                 var scr = Module._lv_screen_active();
-                if (scr) {
-                  Module._lv_obj_clean(scr);
+                if (!scr) {
+                  if (badgeEl) badgeEl.textContent = badgeEl.textContent.replace(new RegExp(' \\| exports=[0-9]+/6$'), '') + ' wait=' + String(attempt);
+                  if (attempt < 60) setTimeout(function() { tryBuild(attempt + 1); }, 50);
+                  return;
+                }
+                Module._lv_obj_clean(scr);
                   var createObj = Module.cwrap('lv_obj_create', 'number', ['number']);
                   var createBtn = Module.cwrap('lv_button_create', 'number', ['number']);
                   var createLabel = Module.cwrap('lv_label_create', 'number', ['number']);
-                  var createImg = Module._lv_img_create ? Module.cwrap('lv_img_create', 'number', ['number']) : null;
+                  /* LVGL v9 uses lv_image_create; lv_img_create is only a macro alias (no exported symbol). */
+                  var createImg =
+                    (Module._lv_image_create ? Module.cwrap('lv_image_create', 'number', ['number']) : null) ||
+                    (Module._lv_img_create ? Module.cwrap('lv_img_create', 'number', ['number']) : null);
                   var createSlider = Module._lv_slider_create ? Module.cwrap('lv_slider_create', 'number', ['number']) : null;
                   var createBar = Module._lv_bar_create ? Module.cwrap('lv_bar_create', 'number', ['number']) : null;
                   var createSwitch = Module._lv_switch_create ? Module.cwrap('lv_switch_create', 'number', ['number']) : null;
@@ -445,11 +456,13 @@ export class DesignerPanel {
                   var setWidth = Module.cwrap('lv_obj_set_width', null, ['number', 'number']);
                   var setHeight = Module.cwrap('lv_obj_set_height', null, ['number', 'number']);
                   var setLabelText = Module.cwrap('lv_label_set_text', null, ['number', 'string']);
+                  var setTextColor = Module._lvcraft_obj_set_style_text_color ? Module.cwrap('lvcraft_obj_set_style_text_color', null, ['number', 'number']) : null;
                   var setTextareaText = Module._lv_textarea_set_text ? Module.cwrap('lv_textarea_set_text', null, ['number', 'string']) : null;
                   var setTextareaPlaceholder = Module._lv_textarea_set_placeholder_text ? Module.cwrap('lv_textarea_set_placeholder_text', null, ['number', 'string']) : null;
                   var setSliderValue = Module._lv_slider_set_value ? Module.cwrap('lv_slider_set_value', null, ['number', 'number', 'number']) : null;
                   var setBarValue = Module._lv_bar_set_value ? Module.cwrap('lv_bar_set_value', null, ['number', 'number', 'number']) : null;
                   var setCheckboxText = Module._lv_checkbox_set_text ? Module.cwrap('lv_checkbox_set_text', null, ['number', 'string']) : null;
+                  var createdCount = 0;
                   function createWidget(w, parent) {
                     if (!w) return 0;
                     var t = (w.type || 'obj').toLowerCase();
@@ -464,11 +477,15 @@ export class DesignerPanel {
                     else if (t === 'textarea' && createTextarea) obj = createTextarea(parent);
                     else obj = createObj(parent);
                     if (!obj) return 0;
+                    createdCount++;
                     if (typeof w.x === 'number' && typeof w.y === 'number') setPos(obj, Math.round(w.x), Math.round(w.y));
                     if (typeof w.width === 'number' && typeof w.height === 'number') setSize(obj, Math.round(w.width), Math.round(w.height));
                     else if (typeof w.width === 'number') setWidth(obj, Math.round(w.width));
                     else if (typeof w.height === 'number') setHeight(obj, Math.round(w.height));
-                    if (t === 'label' || t === 'lbl') { if (typeof w.text === 'string') setLabelText(obj, w.text); }
+                    if (t === 'label' || t === 'lbl') {
+                      if (typeof w.text === 'string') setLabelText(obj, w.text);
+                      if (setTextColor) setTextColor(obj, (typeof w.textColor === 'number' ? w.textColor : 0x000000) >>> 0);
+                    }
                     else if (t === 'textarea' && setTextareaText) {
                       if (typeof w.text === 'string') setTextareaText(obj, w.text);
                       if (typeof w.placeholder === 'string' && setTextareaPlaceholder) setTextareaPlaceholder(obj, w.placeholder);
@@ -480,26 +497,61 @@ export class DesignerPanel {
                     return obj;
                   }
                   createWidget(layout.root, scr);
-                }
+                  if (badgeEl) badgeEl.textContent = badgeEl.textContent.replace(new RegExp(' wait=[0-9]+$'), '').replace(new RegExp(' \\| exports=[0-9]+/6$'), '') + ' | created=' + String(createdCount);
+                  if (Module._lv_refr_now) {
+                    Module._lv_refr_now(0);
+                    setTimeout(function() { Module._lv_refr_now(0); }, 50);
+                    setTimeout(function() { Module._lv_refr_now(0); }, 150);
+                  }
               } catch (e) { console.warn('LVCraft layout preview:', e); }
             }
+            tryBuild(0);
             var viewportEl = document.getElementById('lvcraft-preview-viewport');
-            var ourIds = { 'lvcraft-preview-canvas': 1, 'lvcraft-grid-canvas': 1, 'lvcraft-selection-canvas': 1 };
-            setTimeout(function tryAdoptCanvas() {
-              var all = document.querySelectorAll('canvas');
-              for (var i = 0; i < all.length; i++) {
-                var c = all[i];
-                if (!ourIds[c.id] && viewportEl && c.parentNode !== viewportEl) {
-                  c.style.position = 'absolute';
-                  c.style.left = '0';
-                  c.style.top = '0';
-                  c.style.display = 'block';
-                  viewportEl.appendChild(c);
-                  if (canvasEl) canvasEl.style.display = 'none';
-                  break;
+            function showLvglCanvas() {
+              if (!viewportEl) return;
+              var active = (typeof Module !== 'undefined' && Module.canvas) ? Module.canvas : null;
+              if (active && active instanceof HTMLCanvasElement) {
+                if (active !== canvasEl) {
+                  if (active.parentNode !== viewportEl) {
+                    active.style.position = 'absolute';
+                    active.style.left = '0';
+                    active.style.top = '0';
+                    active.style.display = 'block';
+                    active.style.zIndex = '1';
+                    viewportEl.appendChild(active);
+                  }
+                  if (canvasEl) { canvasEl.style.display = 'none'; canvasEl.style.zIndex = '0'; }
+                  return;
                 }
               }
-            }, 800);
+              if (canvasEl) { canvasEl.style.display = 'block'; canvasEl.style.zIndex = '1'; }
+            }
+            setTimeout(showLvglCanvas, 100);
+            setTimeout(showLvglCanvas, 500);
+            setTimeout(showLvglCanvas, 1200);
+            setTimeout(function() {
+              try {
+                var count = document.querySelectorAll('canvas').length;
+                var mid = (typeof Module !== 'undefined' && Module.canvas) ? (Module.canvas.id || '(no id)') : '(no Module.canvas)';
+                vscode.postMessage({ type: 'designerDebug', payload: { canvasCount: count, moduleCanvasId: mid } });
+              } catch (e) {}
+            }, 1000);
+          }
+          window.Module = {
+            canvas: canvasEl,
+            /* Emscripten passes argv[0] as program name automatically.
+               Our C main expects argv[1]=width, argv[2]=height. */
+            arguments: [String(w), String(h)],
+            lvcraft_layout: layout ? JSON.stringify(layout) : null,
+            /* Run after main() so display is registered. */
+            postRun: [function() { runAfterRuntimeReady(); }]
+          };
+          var script = document.createElement('script');
+          script.id = 'mainScript';
+          script.src = LVGL_SCRIPT_URI;
+          script.onload = function() {
+            /* Do NOT touch exported functions here: the JS file is loaded, but the Wasm instance
+               may not be initialized yet. We rely on Module.postRun, which runs after main(). */
           };
           script.onerror = function() {
             if (overlayEl) {

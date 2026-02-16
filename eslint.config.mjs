@@ -8,6 +8,24 @@ export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    /* Node.js helper scripts (CommonJS). */
+    files: ['scripts/**/*.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        __dirname: 'readonly',
+        process: 'readonly',
+        console: 'readonly'
+      }
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off'
+    }
+  },
+  {
     files: ['src/**/*.ts'],
     languageOptions: {
       parserOptions: {

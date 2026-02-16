@@ -66,6 +66,12 @@ EM_JS(int, lvcraft_canvas_height, (void), {
   }
 });
 
+/** Set label (or any object) text color from JS. hex_color is 0xRRGGBB. */
+void lvcraft_obj_set_style_text_color(lv_obj_t *obj, uint32_t hex_color)
+{
+    if (obj) lv_obj_set_style_text_color(obj, lv_color_hex(hex_color), 0);
+}
+
 static void lv_example_noop(void) {
 }
 
