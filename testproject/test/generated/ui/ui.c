@@ -12,6 +12,8 @@ void ui_init(void)
   lv_obj_set_pos(ui_lbl_title, 20, 20);
   lv_obj_set_size(ui_lbl_title, 200, 30);
   lv_label_set_text(ui_lbl_title, "Hello");
+  lv_obj_set_style_text_color(ui_lbl_title, lv_color_hex(0xff0000), 0);
   /* USER CODE BEGIN init */
+
   /* USER CODE END init */
 }

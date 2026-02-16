@@ -188,6 +188,11 @@ function emitWidget(
       lines.push(`${indent}lv_roller_set_options(${varName}, "${escaped}", LV_ROLLER_MODE_NORMAL);`);
     }
   }
+  /* Inline text color (layout.json textColor) for widgets that display text */
+  const textColor = typeof w.textColor === 'number' ? (w.textColor >>> 0) & 0xffffff : undefined;
+  if (textColor !== undefined && (t === 'label' || t === 'lbl' || t === 'btn' || t === 'button' || t === 'checkbox' || t === 'textarea' || t === 'text_area')) {
+    lines.push(`${indent}lv_obj_set_style_text_color(${varName}, lv_color_hex(0x${textColor.toString(16).padStart(6, '0')}), 0);`);
+  }
   (w.children ?? []).forEach((c, i) => {
     lines.push(
       ...emitWidget(c, `${path}_${i}`, varName, idMap, styleMap, indent)
