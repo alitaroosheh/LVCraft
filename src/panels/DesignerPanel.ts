@@ -118,10 +118,27 @@ export class DesignerPanel {
   }
 
   private _refresh(): void {
-    this._panel.webview.html = this._getHtmlForWebview(
-      this._panel.webview,
-      this._extensionUri
-    );
+    try {
+      this._panel.webview.html = this._getHtmlForWebview(
+        this._panel.webview,
+        this._extensionUri
+      );
+    } catch (e) {
+      const err = e instanceof Error ? e.message : String(e);
+      log(`DesignerPanel: failed to build HTML: ${err}`);
+      if (e instanceof Error && e.stack) log(e.stack);
+      this._panel.webview.html = this._getErrorHtml(err);
+    }
+  }
+
+  private _getErrorHtml(message: string): string {
+    const escaped = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>LVCraft</title></head><body style="margin:1rem;font-family:var(--vscode-font-family);color:var(--vscode-foreground);">
+<h2>LVCraft Designer</h2>
+<p>Failed to load the designer:</p>
+<pre style="white-space:pre-wrap;word-break:break-all;">${escaped}</pre>
+<p>Check the Output panel (LVCraft) and the main Developer Console for details.</p>
+</body></html>`;
   }
 
   public dispose() {
@@ -139,8 +156,8 @@ export class DesignerPanel {
     const layout = readLayout(this._projectRoot.fsPath);
     const assets = readAssets(this._projectRoot.fsPath);
 
-    const width = lvproj?.resolution.width ?? 320;
-    const height = lvproj?.resolution.height ?? 240;
+    const width = Math.max(1, lvproj?.resolution?.width ?? 320);
+    const height = Math.max(1, lvproj?.resolution?.height ?? 240);
     const lvglVersion = lvproj?.lvglVersion ?? '—';
     const colorDepth = lvproj?.colorDepth ?? 16;
 
@@ -385,16 +402,31 @@ export class DesignerPanel {
           var overlayEl = document.getElementById('lvcraft-preview-overlay');
           var canvasEl = document.getElementById('lvcraft-preview-canvas');
           var layout = (window.__LVCRAFT_PREVIEW__ && window.__LVCRAFT_PREVIEW__.layout) || null;
+          var w = Math.max(1, parseInt(W, 10) || 320);
+          var h = Math.max(1, parseInt(H, 10) || 240);
+          [canvasEl, document.getElementById('lvcraft-grid-canvas'), document.getElementById('lvcraft-selection-canvas')].forEach(function(c) {
+            if (c) { c.width = w; c.height = h; }
+          });
           window.Module = {
             canvas: canvasEl,
-            arguments: ['', String(W), String(H)],
+            arguments: ['', String(w), String(h)],
             lvcraft_layout: layout ? JSON.stringify(layout) : null
           };
           var script = document.createElement('script');
+          script.id = 'mainScript';
           script.src = LVGL_SCRIPT_URI;
           script.onload = function() {
-            if (overlayEl) overlayEl.style.display = 'none';
-            if (layout && layout.root && Module._lv_screen_active && Module._lv_obj_clean) {
+            var hasRoot = layout && layout.root;
+            if (overlayEl) {
+              if (hasRoot) {
+                overlayEl.style.display = 'none';
+              } else {
+                overlayEl.style.display = 'flex';
+                var span = overlayEl.querySelector('span');
+                if (span) span.textContent = 'Layout empty. Add a root widget in layout.json to see the preview.';
+              }
+            }
+            if (hasRoot && Module._lv_screen_active && Module._lv_obj_clean) {
               try {
                 var scr = Module._lv_screen_active();
                 if (scr) {
@@ -402,20 +434,48 @@ export class DesignerPanel {
                   var createObj = Module.cwrap('lv_obj_create', 'number', ['number']);
                   var createBtn = Module.cwrap('lv_button_create', 'number', ['number']);
                   var createLabel = Module.cwrap('lv_label_create', 'number', ['number']);
+                  var createImg = Module._lv_img_create ? Module.cwrap('lv_img_create', 'number', ['number']) : null;
+                  var createSlider = Module._lv_slider_create ? Module.cwrap('lv_slider_create', 'number', ['number']) : null;
+                  var createBar = Module._lv_bar_create ? Module.cwrap('lv_bar_create', 'number', ['number']) : null;
+                  var createSwitch = Module._lv_switch_create ? Module.cwrap('lv_switch_create', 'number', ['number']) : null;
+                  var createCheckbox = Module._lv_checkbox_create ? Module.cwrap('lv_checkbox_create', 'number', ['number']) : null;
+                  var createTextarea = Module._lv_textarea_create ? Module.cwrap('lv_textarea_create', 'number', ['number']) : null;
                   var setPos = Module.cwrap('lv_obj_set_pos', null, ['number', 'number', 'number']);
                   var setSize = Module.cwrap('lv_obj_set_size', null, ['number', 'number', 'number']);
                   var setWidth = Module.cwrap('lv_obj_set_width', null, ['number', 'number']);
                   var setHeight = Module.cwrap('lv_obj_set_height', null, ['number', 'number']);
-                  var setText = Module.cwrap('lv_label_set_text', null, ['number', 'string']);
+                  var setLabelText = Module.cwrap('lv_label_set_text', null, ['number', 'string']);
+                  var setTextareaText = Module._lv_textarea_set_text ? Module.cwrap('lv_textarea_set_text', null, ['number', 'string']) : null;
+                  var setTextareaPlaceholder = Module._lv_textarea_set_placeholder_text ? Module.cwrap('lv_textarea_set_placeholder_text', null, ['number', 'string']) : null;
+                  var setSliderValue = Module._lv_slider_set_value ? Module.cwrap('lv_slider_set_value', null, ['number', 'number', 'number']) : null;
+                  var setBarValue = Module._lv_bar_set_value ? Module.cwrap('lv_bar_set_value', null, ['number', 'number', 'number']) : null;
+                  var setCheckboxText = Module._lv_checkbox_set_text ? Module.cwrap('lv_checkbox_set_text', null, ['number', 'string']) : null;
                   function createWidget(w, parent) {
+                    if (!w) return 0;
                     var t = (w.type || 'obj').toLowerCase();
-                    var obj = (t === 'btn' || t === 'button') ? createBtn(parent) : (t === 'label' || t === 'lbl') ? createLabel(parent) : createObj(parent);
+                    var obj = 0;
+                    if (t === 'btn' || t === 'button') obj = createBtn(parent);
+                    else if (t === 'label' || t === 'lbl') obj = createLabel(parent);
+                    else if ((t === 'img' || t === 'image') && createImg) obj = createImg(parent);
+                    else if (t === 'slider' && createSlider) obj = createSlider(parent);
+                    else if (t === 'bar' && createBar) obj = createBar(parent);
+                    else if (t === 'switch' && createSwitch) obj = createSwitch(parent);
+                    else if (t === 'checkbox' && createCheckbox) obj = createCheckbox(parent);
+                    else if (t === 'textarea' && createTextarea) obj = createTextarea(parent);
+                    else obj = createObj(parent);
                     if (!obj) return 0;
                     if (typeof w.x === 'number' && typeof w.y === 'number') setPos(obj, Math.round(w.x), Math.round(w.y));
                     if (typeof w.width === 'number' && typeof w.height === 'number') setSize(obj, Math.round(w.width), Math.round(w.height));
                     else if (typeof w.width === 'number') setWidth(obj, Math.round(w.width));
                     else if (typeof w.height === 'number') setHeight(obj, Math.round(w.height));
-                    if ((t === 'label' || t === 'lbl') && typeof w.text === 'string') setText(obj, w.text);
+                    if (t === 'label' || t === 'lbl') { if (typeof w.text === 'string') setLabelText(obj, w.text); }
+                    else if (t === 'textarea' && setTextareaText) {
+                      if (typeof w.text === 'string') setTextareaText(obj, w.text);
+                      if (typeof w.placeholder === 'string' && setTextareaPlaceholder) setTextareaPlaceholder(obj, w.placeholder);
+                    }
+                    else if (t === 'slider' && setSliderValue && typeof w.value === 'number') setSliderValue(obj, Math.round(w.value), 1);
+                    else if (t === 'bar' && setBarValue && typeof w.value === 'number') setBarValue(obj, Math.round(w.value), 1);
+                    else if (t === 'checkbox' && setCheckboxText && typeof w.text === 'string') setCheckboxText(obj, w.text);
                     (w.children || []).forEach(function(c) { createWidget(c, obj); });
                     return obj;
                   }
@@ -423,6 +483,23 @@ export class DesignerPanel {
                 }
               } catch (e) { console.warn('LVCraft layout preview:', e); }
             }
+            var viewportEl = document.getElementById('lvcraft-preview-viewport');
+            var ourIds = { 'lvcraft-preview-canvas': 1, 'lvcraft-grid-canvas': 1, 'lvcraft-selection-canvas': 1 };
+            setTimeout(function tryAdoptCanvas() {
+              var all = document.querySelectorAll('canvas');
+              for (var i = 0; i < all.length; i++) {
+                var c = all[i];
+                if (!ourIds[c.id] && viewportEl && c.parentNode !== viewportEl) {
+                  c.style.position = 'absolute';
+                  c.style.left = '0';
+                  c.style.top = '0';
+                  c.style.display = 'block';
+                  viewportEl.appendChild(c);
+                  if (canvasEl) canvasEl.style.display = 'none';
+                  break;
+                }
+              }
+            }, 800);
           };
           script.onerror = function() {
             if (overlayEl) {

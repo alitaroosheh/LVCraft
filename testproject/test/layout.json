@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "root": {
+    "type": "obj",
+    "x": 0,
+    "y": 0,
+    "width": 800,
+    "height": 480,
+    "children": [
+      {
+        "type": "label",
+        "id": "lbl_title",
+        "x": 20,
+        "y": 20,
+        "width": 200,
+        "height": 30,
+        "text": "Hello"
+      }
+    ]
+  }
+}

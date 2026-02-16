@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "lvglVersion": "9.0.0",
+  "resolution": {
+    "width": 320,
+    "height": 240
+  },
+  "colorDepth": 16,
+  "memoryProfile": "default",
+  "theme": "default",
+  "generator": {
+    "namingConvention": "snake_case",
+    "modularSplitting": true
+  }
+}

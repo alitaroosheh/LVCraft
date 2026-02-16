@@ -6,7 +6,9 @@
 /*********************
  *      INCLUDES
  *********************/
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
@@ -44,6 +46,26 @@ EM_JS(int, lvcraft_has_layout, (void), {
   return (typeof Module !== 'undefined' && Module.lvcraft_layout) ? 1 : 0;
 });
 
+EM_JS(int, lvcraft_canvas_width, (void), {
+  try {
+    if (typeof Module === 'undefined') return 0;
+    if (!Module.canvas) return 0;
+    return (Module.canvas.width | 0) || 0;
+  } catch (e) {
+    return 0;
+  }
+});
+
+EM_JS(int, lvcraft_canvas_height, (void), {
+  try {
+    if (typeof Module === 'undefined') return 0;
+    if (!Module.canvas) return 0;
+    return (Module.canvas.height | 0) || 0;
+  } catch (e) {
+    return 0;
+  }
+});
+
 static void lv_example_noop(void) {
 }
 
@@ -51,8 +73,20 @@ int main(int argc, char ** argv)
 {
     extern const struct lv_ci_example lv_ci_example_list[];
     const struct lv_ci_example *ex = NULL;
-    monitor_hor_res = atoi(argv[1]);
-    monitor_ver_res = atoi(argv[2]);
+    monitor_hor_res = (argc >= 2 && argv[1]) ? atoi(argv[1]) : 0;
+    monitor_ver_res = (argc >= 3 && argv[2]) ? atoi(argv[2]) : 0;
+
+    /* LVCraft robustness: some hosts (webviews) can end up passing 0/invalid argv.
+       If that happens, fall back to the actual canvas size (set by the extension). */
+    if (monitor_hor_res <= 0 || monitor_ver_res <= 0) {
+        int cw = lvcraft_canvas_width();
+        int ch = lvcraft_canvas_height();
+        if (cw > 0) monitor_hor_res = cw;
+        if (ch > 0) monitor_ver_res = ch;
+    }
+    if (monitor_hor_res <= 0) monitor_hor_res = 320;
+    if (monitor_ver_res <= 0) monitor_ver_res = 240;
+
     if (argc >= 4 && argv[3] && strcmp(argv[3], "default")) {
         for (ex = &lv_ci_example_list[0]; ex->name != NULL; ex++) {
             if (!strcmp(ex->name, argv[3])) break;

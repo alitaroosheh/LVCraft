@@ -509,3 +509,9 @@ Status legend:
 - Satisfies PRD 2.1 Runtime = Preview: Designer canvas shows user's layout rendered in real LVGL
 
 <mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>
+
+## Step 23 — More widget types in live preview
+- Export and use in JS builder: img, slider, bar, switch, checkbox, textarea (create + set_text/placeholder/value where applicable)
+- Live preview shows these widgets with pos/size and text/value/placeholder
+
+<mark style="background: #c6f6d5; color: #22543d; padding: 0 4px; border-radius: 3px;">Done!</mark>

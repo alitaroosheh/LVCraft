@@ -44,8 +44,11 @@ if (fs.existsSync(overlayMain)) {
   let cmake = fs.readFileSync(cmakePath, 'utf-8');
   const exports = [
     '_lv_screen_active', '_lv_obj_clean', '_lv_obj_create', '_lv_obj_set_parent',
-    '_lv_button_create', '_lv_label_create', '_lv_obj_set_pos', '_lv_obj_set_size',
-    '_lv_label_set_text'
+    '_lv_button_create', '_lv_label_create', '_lv_img_create', '_lv_slider_create',
+    '_lv_bar_create', '_lv_switch_create', '_lv_checkbox_create', '_lv_textarea_create',
+    '_lv_obj_set_pos', '_lv_obj_set_size', '_lv_obj_set_width', '_lv_obj_set_height',
+    '_lv_label_set_text', '_lv_textarea_set_text', '_lv_textarea_set_placeholder_text',
+    '_lv_slider_set_value', '_lv_bar_set_value', '_lv_checkbox_set_text'
   ].map((e) => `"${e}"`).join(',');
   cmake = cmake.replace(
     /(LINK_FLAGS "--shell-file [^"]+ -s SINGLE_FILE=1 -s INITIAL_MEMORY=\d+")/,
