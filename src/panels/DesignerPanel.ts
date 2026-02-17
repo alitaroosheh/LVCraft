@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { getNonce } from '../webview/getNonce';
 import { log } from '../infra/log';
@@ -86,6 +87,17 @@ export class DesignerPanel {
           this._refresh();
         } else if (msg.type === 'designerDebug' && msg.payload !== undefined) {
           log('Designer preview: ' + JSON.stringify(msg.payload));
+        } else if (msg.type === 'updateLayout' && msg.payload && typeof msg.payload === 'object' && 'layout' in msg.payload) {
+          const layout = (msg.payload as { layout: { version?: number; root?: unknown } }).layout;
+          if (layout && layout.version === 1) {
+            const layoutPath = path.join(this._projectRoot.fsPath, 'layout.json');
+            try {
+              fs.writeFileSync(layoutPath, JSON.stringify(layout, null, 2), 'utf-8');
+              log('Designer: layout.json updated (widget reorder)');
+            } catch (e) {
+              log('Designer: failed to write layout.json: ' + (e instanceof Error ? e.message : String(e)));
+            }
+          }
         }
       },
       null,
@@ -230,6 +242,9 @@ export class DesignerPanel {
       .wt-node { display: block; padding: 2px 4px; cursor: pointer; border-radius: 2px; }
       .wt-node:hover { background: var(--vscode-list-hoverBackground); }
       .wt-node.selected { background: var(--vscode-list-activeSelectionBackground); color: var(--vscode-list-activeSelectionForeground); }
+      .wt-node[draggable="true"] { cursor: grab; }
+      .wt-node[draggable="true"]:active { cursor: grabbing; }
+      .wt-node.wt-drag-over { background: var(--vscode-list-hoverBackground); outline: 1px dashed var(--vscode-focusBorder); }
       .wt-style { font-size: 10px; color: var(--vscode-descriptionForeground); margin-left: 4px; }
       .wt-empty { color: var(--vscode-descriptionForeground); font-style: italic; }
       .asset-section { margin-top: 8px; }
@@ -679,6 +694,47 @@ export class DesignerPanel {
           node.addEventListener('click', function() {
             var path = this.getAttribute('data-path');
             if (path) selectWidget(path);
+          });
+        });
+        function parentPath(p) { var i = p.lastIndexOf('.'); return i === -1 ? '' : p.slice(0, i); }
+        function childIndex(p) { var i = p.lastIndexOf('.'); return i === -1 ? -1 : parseInt(p.slice(i + 1), 10); }
+        function reorderLayout(fromPath, toPath) {
+          if (fromPath === toPath || fromPath === 'root' || toPath === 'root') return false;
+          var pFrom = parentPath(fromPath), pTo = parentPath(toPath);
+          if (pFrom !== pTo) return false;
+          var layout = window.__LVCRAFT_PREVIEW__ && window.__LVCRAFT_PREVIEW__.layout;
+          if (!layout || !layout.root) return false;
+          var parent = getWidgetByPath(layout, pFrom);
+          if (!parent || !Array.isArray(parent.children)) return false;
+          var fromIdx = childIndex(fromPath), toIdx = childIndex(toPath);
+          if (fromIdx < 0 || toIdx < 0 || fromIdx >= parent.children.length || toIdx >= parent.children.length) return false;
+          if (fromIdx === toIdx) return false;
+          var arr = parent.children.slice();
+          var item = arr.splice(fromIdx, 1)[0];
+          arr.splice(toIdx, 0, item);
+          parent.children = arr;
+          vscode.postMessage({ type: 'updateLayout', payload: { layout: layout } });
+          return true;
+        }
+        document.querySelectorAll('.wt-node').forEach(function(node) {
+          var path = node.getAttribute('data-path');
+          if (path && path !== 'root') node.setAttribute('draggable', 'true');
+          node.addEventListener('dragstart', function(e) {
+            var p = this.getAttribute('data-path');
+            if (p && p !== 'root') e.dataTransfer.setData('text/plain', p);
+          });
+          node.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            this.classList.add('wt-drag-over');
+          });
+          node.addEventListener('dragleave', function() { this.classList.remove('wt-drag-over'); });
+          node.addEventListener('dragend', function() { document.querySelectorAll('.wt-drag-over').forEach(function(n) { n.classList.remove('wt-drag-over'); }); });
+          node.addEventListener('drop', function(e) {
+            e.preventDefault();
+            var fromPath = e.dataTransfer.getData('text/plain');
+            var toPath = this.getAttribute('data-path');
+            if (fromPath && toPath) reorderLayout(fromPath, toPath);
           });
         });
       })();
