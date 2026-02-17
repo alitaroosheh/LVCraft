@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Inline text color in code generator**: Widgets with `textColor` in layout.json (label, btn, checkbox, textarea) emit `lv_obj_set_style_text_color(obj, lv_color_hex(0xRRGGBB), 0)` so generated C matches the Designer preview.
 - **Shared styles in Designer preview**: Widgets with `styleId` now have their shared style (from `styles.json`) applied in the LVGL WASM preview: `bg_color`, `bg_opa`, and `text_color` so the preview matches the generated UI.
 - **Widget Tree drag reorder**: Sibling widgets can be reordered by drag-and-drop in the Widget Tree; `layout.json` is updated and the panel refreshes via file watcher (PRD 4.3).
+- **Snap to grid**: Command **LVCraft: Snap Layout to Grid** and Designer toolbar button round all widget x, y, width, height to a 10px grid and write `layout.json`; Designer refreshes via file watcher (PRD 4.3 Canvas).
 - **Bounding box display**: Selecting a widget in the Widget Tree shows a dashed selection rectangle on the canvas at the widget's position and size from layout.json.
 - **Live layout preview**: Designer canvas renders the user's layout.json in real LVGL WASM. Rebuild lvgl.js with `npm run build:wasm` to enable; when layout is present, the demo is skipped and widgets are created from layout.
 - **Live preview widget types**: obj, btn, label, img, slider, bar, switch, checkbox, textarea (with text, placeholder, value where applicable).

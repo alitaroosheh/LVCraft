@@ -6,6 +6,7 @@ import { runCreateProjectWizard } from './project/createProjectWizard';
 import { runOpenProjectCommand } from './project/openProjectCommand';
 import { runGenerateCodeCommand } from './generator/generateCodeCommand';
 import { runCleanGeneratedCommand } from './generator/cleanGeneratedCommand';
+import { runSnapToGridCommand } from './layout/snapToGrid';
 import {
   ensureWasmRuntime,
   ensureWasmRuntimeBackground
@@ -38,6 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('lvcraft.openProject', () => runOpenProjectCommand()),
     vscode.commands.registerCommand('lvcraft.generateCode', () => runGenerateCodeCommand()),
     vscode.commands.registerCommand('lvcraft.cleanGenerated', () => runCleanGeneratedCommand()),
+    vscode.commands.registerCommand('lvcraft.snapToGrid', () => runSnapToGridCommand()),
     vscode.commands.registerCommand('lvcraft.openSimulator', () => {
       log('Command: lvcraft.openSimulator');
       const wsFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;

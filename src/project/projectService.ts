@@ -72,6 +72,12 @@ export function readLayout(projectRoot: string): Layout {
   return DEFAULT_LAYOUT;
 }
 
+/** Write layout.json to a project root */
+export function writeLayout(projectRoot: string, layout: Layout): void {
+  const p = path.join(projectRoot, LAYOUT_FILENAME);
+  fs.writeFileSync(p, JSON.stringify(layout, null, 2), 'utf-8');
+}
+
 /** Read assets.json from a project root */
 export function readAssets(projectRoot: string): Assets {
   const p = path.join(projectRoot, ASSETS_FILENAME);

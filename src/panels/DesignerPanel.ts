@@ -83,6 +83,8 @@ export class DesignerPanel {
       (msg: { type?: string; payload?: unknown }) => {
         if (msg.type === 'generateCode') {
           void vscode.commands.executeCommand('lvcraft.generateCode');
+        } else if (msg.type === 'snapToGrid') {
+          void vscode.commands.executeCommand('lvcraft.snapToGrid');
         } else if (msg.type === 'refresh') {
           this._refresh();
         } else if (msg.type === 'designerDebug' && msg.payload !== undefined) {
@@ -273,6 +275,7 @@ export class DesignerPanel {
         <button type="button" class="toolbar-btn" data-action="zoomFit" title="Fit to view">Fit</button>
         <button type="button" class="toolbar-btn" data-action="toggleGrid" title="Toggle pixel grid" id="lvcraft-grid-btn">Grid</button>
         <button type="button" class="toolbar-btn" data-action="generateCode">Generate Code</button>
+        <button type="button" class="toolbar-btn" data-action="snapToGrid" title="Snap all widget x, y, width, height to 10px grid">Snap to Grid</button>
         <button type="button" class="toolbar-btn" data-action="refresh">Refresh</button>
       </div>
     </header>

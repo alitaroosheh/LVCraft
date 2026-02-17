@@ -17,7 +17,8 @@
     "onCommand:lvcraft.generateCode",
     "onCommand:lvcraft.cleanGenerated",
     "onCommand:lvcraft.openSimulator",
-    "onCommand:lvcraft.installWasmRuntime"
+    "onCommand:lvcraft.installWasmRuntime",
+    "onCommand:lvcraft.snapToGrid"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -27,6 +28,7 @@
       { "command": "lvcraft.openProject", "title": "LVCraft: Open Existing Project" },
       { "command": "lvcraft.generateCode", "title": "LVCraft: Generate Code" },
       { "command": "lvcraft.cleanGenerated", "title": "LVCraft: Clean Generated" },
+      { "command": "lvcraft.snapToGrid", "title": "LVCraft: Snap Layout to Grid" },
       { "command": "lvcraft.openSimulator", "title": "LVCraft: Open Simulator" },
       { "command": "lvcraft.installWasmRuntime", "title": "LVCraft: Install LVGL WASM Runtime" }
     ]
